@@ -1,0 +1,222 @@
+import {gql} from 'apollo-server';
+import {User} from '../db';
+import {GatewayServer} from '../gateway';
+
+export interface Paginated<T> {
+  nodes: T[];
+  totalCount: number;
+}
+export interface GraphContext {
+    gateway: GatewayServer;
+    token: string;
+    user: User;
+}
+
+const typeDefs = gql`
+    enum Platform {
+        """
+        A loose description of where a Script will be executed
+        """
+        NODEJS
+    }
+    enum BotState {
+        """
+        The State of a bot at the end of a Connection
+        """
+        STARTUP
+        OK
+        ERROR
+    }
+    enum ScriptState {
+        """
+        What a Script is up to
+        """
+        RUNNING
+        PASSIVE
+        ERRORED
+        STOPPED
+    }
+    scalar Date # ISO String
+
+    type User {
+        """
+        A account on Canal
+        """
+        id: String!
+        name: String
+        avatarUrl: String
+        discordId: String
+    }
+    type ClientUser {
+        """
+        You, the logged in User. Shows extra info like email
+        """
+        id: String!
+        name: String!
+        avatarUrl: String!
+        email: String!
+        created: Date!
+        discordId: String
+    }
+    input UserUpdateInput {
+        id: String
+        name: String
+        email: String
+    }
+
+    type Bot {
+        id: String!
+        name: String!
+        platform: Platform!
+        resourceOwner: User!
+        apiKey: String!
+        avatarUrl: String
+        created: Date!
+        createdBy: User
+        connection: BotConnection
+        scripts(first: Int = 10, after: String): ScriptLinks!
+        script(id: String!): ScriptLink
+        permissions: [BotPermission!]! # At the moment this doesn't seem worth paginating
+        options: BotOptions!
+    }
+    type Bots {
+        totalCount: Int!
+        nodes: [Bot!]!
+    }
+    type BotConnection {
+        state: BotState
+        created: Date
+    }
+    type BotOptions {
+        token: String
+        commandMode: String
+    }
+    input BotOptionsInput {
+        token: String
+        commandMode: String
+    }
+    input BotCreateInput {
+        platform: String!
+        token: String
+        deviceCode: String!
+    }
+    input BotUpdateInput {
+        id: String!
+        name: String
+        platform: String
+        options: BotOptionsInput
+    }
+
+    # Jesus christ this is a lot of types for a tiny feature
+    enum BotPermissionQualifierType {
+        USER
+        ROLE
+        CHANNEL
+        GUILD
+    }
+    type BotPermissionQualifier {
+        id: String!
+        type: String!
+        value: String!
+    }
+    type BotPermission {
+        id: String!
+        name: String!
+        qualifiers: [BotPermissionQualifier!]!
+    }
+    input BotPermissionCreateInput {
+        bot: String!
+        name: String!
+    }
+    input BotPermissionQualifierInput {
+        id: String # If this is missing, a new qualifier will be created. If present, it will be updated
+        delete: Boolean # If this and ID is present, the Qualifier will be removed
+        type: String
+        value: String
+    }
+    input BotPermissionUpdateInput {
+        id: String!
+        name: String
+        qualifiers: [BotPermissionQualifierInput]!
+    }
+
+    type Script {
+        id: String!
+        name: String!
+        body: String!
+        platform: Platform!
+        resourceOwner: User!
+        created: Date!
+        createdBy: User
+        updated: Date
+        updatedBy: User
+    }
+    type Scripts {
+        totalCount: Int!
+        nodes: [Script!]!
+    }
+    input ScriptCreateInput {
+        name: String!
+        body: String
+        platform: Platform!
+    }
+    input ScriptUpdateInput {
+        id: String!
+        name: String
+        body: String
+        platform: Platform
+    }
+
+    type ScriptLink {
+        script: Script!
+        bot: Bot!
+        lastStarted: Date!
+        state: ScriptState
+        added: Date!
+        addedBy: User
+    }
+    type ScriptLinks {
+        totalCount: Int!
+        nodes: [ScriptLink!]!
+    }
+
+    type Query {
+        bots(first: Int = 10, after: String): Bots!
+        bot(id: String!): Bot
+
+        scripts(first: Int = 10, after: String): Scripts!
+        script(id: String!): Script
+
+        user: ClientUser!
+    }
+
+    type Mutation {
+        # Script CRUD
+        createScript(script: ScriptCreateInput!): Script
+        updateScript(script: ScriptUpdateInput!): Script
+        deleteScript(script: String!): String!
+
+        # ScriptLink CRUD
+        addScriptToBot(script: String!, bot: String!): ScriptLink!
+        removeScriptFromBot(script: String!, bot: String!): String!
+        restartScriptOnBot(script: String!, bot: String!): ScriptLink!
+
+        # Bot CRUD
+        createBot(bot: BotCreateInput!): Bot
+        updateBot(bot: BotUpdateInput!): Bot
+        deleteBot(bot: String!): String!
+
+        # Bot Permission CRUD
+        createBotPermission(perm: BotPermissionCreateInput!): BotPermission!
+        updateBotPermission(perm: BotPermissionUpdateInput!): BotPermission!
+        deleteBotPermission(perm: String!): String!
+
+        # User CRUD
+        updateUser(user: UserUpdateInput): User!
+        destroySession: String!
+        destroyAllSessions(user: String): String!
+    }
+
+`;
+
+export default typeDefs;

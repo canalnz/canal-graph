@@ -1,0 +1,41 @@
+{
+  "name": "canal-api",
+  "version": "1.0.0",
+  "description": "GraphQL API server for Canal",
+  "main": "dist/index.js",
+  "scripts": {
+    "start": "node dist/index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/asherfoster/canal-api.git"
+  },
+  "author": "Asher Foster <me@asherfoster.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/asherfoster/canal-api/issues"
+  },
+  "homepage": "https://github.com/asherfoster/canal-api#readme",
+  "devDependencies": {
+    "@types/flake-idgen": "^0.1.30",
+    "@types/graphql": "^14.2.2",
+    "@types/graphql-iso-date": "^3.3.1",
+    "tslint": "^5.12.1",
+    "typescript": "^3.3.1",
+    "vrsource-tslint-rules": "^6.0.0"
+  },
+  "dependencies": {
+    "@types/node-fetch": "^2.5.0",
+    "apollo-server": "^2.6.7",
+    "apollo-server-express": "^2.7.2",
+    "biguint-format": "^1.0.1",
+    "express": "^4.17.1",
+    "flake-idgen": "^1.1.2",
+    "graphql": "^14.4.2",
+    "graphql-iso-date": "^3.6.1",
+    "node-fetch": "^2.6.0",
+    "pg-promise": "^9.0.0",
+    "ws": "^7.1.0"
+  }
+}
