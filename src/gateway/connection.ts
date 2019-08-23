@@ -1,10 +1,12 @@
 import * as WebSocket from 'ws';
 import * as http from 'http';
-import {getOptionsForBot, getScript, Script} from '../db';
-import {getScriptsLinksForBot} from '../db/scriptLink';
-import {getBotWithKey} from '../models/bot';
+import getBotRepo from '../repos/BotRepo';
+import getScriptLinkRepo from '../repos/ScriptLinkRepo';
+import getScriptRepo from '../repos/ScriptRepo';
+import {Script} from '../entities/Script';
 
 const heartbeatInterval = 5 * 1000;
+const heartbeatTimeoutDuration = 11 * 1000; // Kill if two heartbeats are missed
 
 type IncomingEventName = 'core.heartbeat' | 'core.identify' | 'core.update';
 type OutgoingEventName = 'core.hello' | 'core.ready' | 'scripts.create' | 'options.create';
@@ -19,6 +21,7 @@ function EventHandler(event: IncomingEventName) {
 export class Connection {
   public socketEventHandlers!: {[propName: string]: keyof Connection};
   public token: string = '';
+  public heartbeatTimeoutId: NodeJS.Timer | null = null;
   constructor(private socket: WebSocket, request: http.IncomingMessage) {
     this.sendHello();
     this.socket.on('message', (d) => this.handleMessage(d));
@@ -30,23 +33,24 @@ export class Connection {
   }
 
   @EventHandler('core.identify')
-  public async handleIdentify(payload: {auth: string, client_info: any}) {
-    if (!payload.auth) return this.killConnection(4001, 'auth parameter is required to identify!');
+  public async handleIdentify(payload: {token: string, client_info: any}) {
+    if (!payload.token) return this.killConnection(4001, 'token is required for identify!');
 
-    const bot = await getBotWithKey(payload.auth);
+    const bot = await getBotRepo().findOne({apiKey: payload.token});
     if (!bot) return this.killConnection(4004, 'We failed to authenticate you');
     // Beep boop, they're now authenticated!
-
-    // You bet the client tells me who they are. Maybe they're me?! Who cares!
+    if (!bot.id) {
+      console.error('wtf!?', bot);
+    }
     console.log(`✅  Client ${bot.id} is connected!`);
 
     const scripts = await Promise.all(
-      (await getScriptsLinksForBot(payload.client_info.id))
-        .map(async (s) => await getScript(s.script) as Script)
+      (await getScriptLinkRepo().find({botId: bot.id}))
+        .map(async (s) => await getScriptRepo().findOne({id: s.scriptId}) as Script)
     );
 
     this.send('core.ready', {
-      options: await getOptionsForBot(payload.client_info.id),
+      token: bot.token,
       scripts: scripts.map((s) => ({
         id: s.id,
         name: s.name,
@@ -57,7 +61,10 @@ export class Connection {
   }
   @EventHandler('core.heartbeat')
   public async handleHeartbeat() {
-    // Don't really need to do anything here for MVP
+    if (this.heartbeatTimeoutId) clearTimeout(this.heartbeatTimeoutId);
+    this.heartbeatTimeoutId = setTimeout(() => {
+      this.killConnection(4000, 'We haven\'t received a heartbeat from you in a while. Are you dead?');
+    }, heartbeatTimeoutDuration);
   }
 
   private async handleMessage(d: WebSocket.Data) {

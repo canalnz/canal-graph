@@ -1,4 +1,5 @@
 import fetch from 'node-fetch';
+import User from '../entities/User';
 
 const DISCORD_API_BASE = 'https://discordapp.com/api/v6';
 const DISCORD_CDN = 'https://cdn.discordapp.com';
@@ -8,7 +9,12 @@ export interface Headers {
   [headerName: string]: string;
 }
 
-export function buildAvatarUrl(user: string, hash: string, size?: string): string {
+export function buildAvatarUrl(user: string, hash?: string, size?: string): string {
+  if (!hash) {
+    console.warn('We should fix user data someday');
+    // TODO avatars aren't defaulting correctly
+    return DISCORD_CDN + '/embed/avatars/1.png';
+  }
   return DISCORD_CDN + '/avatars/' + user + '/' + hash + '.png';
 }
 

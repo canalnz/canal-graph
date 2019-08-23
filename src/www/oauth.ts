@@ -1,7 +1,10 @@
 import * as express from 'express';
 import fetch from 'node-fetch';
 import * as url from 'url';
-import {findUserIdByDiscordId, createUserSession, createUser, createOAuthLink} from '../db';
+import getUserRepo from '../repos/UserRepo';
+import getAuthMethodRepo from '../repos/UserAuthMethodRepo';
+import getSessRepo from '../repos/UserSessionRepo';
+import User from '../entities/User';
 
 const APP_BASE_URL = 'http://localhost:8081';
 const DISCORD_TOKEN_ENDPOINT = 'https://discordapp.com/api/v6/oauth2/token';
@@ -73,7 +76,6 @@ router.get('/discord/callback', async (req: express.Request, res: express.Respon
 
   // TODO Improve error responses
   if (!tokenData.access_token) {
-    console.log(tokenData, tokenRequest);
     res.status(400).json({
       error: {
         message: 'The access code you provided didn\'t work :(',
@@ -90,36 +92,46 @@ router.get('/discord/callback', async (req: express.Request, res: express.Respon
   });
   const discordUser = await userResp.json() as DiscordUserResponse;
   // Check if user exists
-  let userId = await findUserIdByDiscordId(discordUser.id);
+  const userRepo = getUserRepo();
+  const authMethodRepo = getAuthMethodRepo();
+  const sessRepo = getSessRepo();
 
+  // console.log(new User());
+  // console.log(userRepo);
+
+  let user = await userRepo.getByToken(discordUser.id);
+  console.log('woop');
+  const newUser = !user;
   // If it does, create a new session
   // If it doesn't, create a new user and assign a session
-  if (!userId) {
-    const newUser = await createUser({
+  if (!user) {
+    user = await userRepo.createAndSave({
       name: discordUser.username,
       email: discordUser.email,
-      avatarUrl: makeDiscordAvatarUrl(discordUser.id, discordUser.avatar)
+      avatarHash: discordUser.avatar,
+      verified: discordUser.verified
     });
-    userId = newUser.id;
-
-    await createOAuthLink({
-      user_id: newUser.id,
+    console.log('woohoo!');
+    await authMethodRepo.createAndSave({
+      user,
       provider: 'DISCORD',
-      provider_id: discordUser.id,
+      providerId: discordUser.id,
       expires: tokenExpiry,
-      refresh_token: tokenData.refresh_token,
-      access_token: tokenData.access_token
+      refreshToken: tokenData.refresh_token,
+      accessToken: tokenData.access_token
     });
   }
-  const sess = await createUserSession(userId, {
-    auth_method: 'DISCORD',
-    ip: req.ip,
-    ua: (req.headers['user-agent'] || 'unknown').substr(0, 256)
+  console.log('ooooh');
+  const sess = await sessRepo.createAndSave({
+    user,
+    authMethod: 'DISCORD',
+    creatorIp: req.ip,
+    creatorUa: (req.headers['user-agent'] || 'unknown').substr(0, 256)
   });
 
   const expiryTime = Math.floor((sess.expires.getTime() - Date.now()) / 1000);
   let redirectUrl = `${APP_BASE_URL}/auth/complete?provider=DISCORD&sess=${sess.token}&expires=${expiryTime}`;
-  if (!userId) redirectUrl += '&newuser=true';
+  if (newUser) redirectUrl += '&newuser=true';
   res.redirect(redirectUrl);
 });
 export default router;

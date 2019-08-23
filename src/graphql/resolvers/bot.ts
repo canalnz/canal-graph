@@ -1,27 +1,46 @@
-import {
-  Bot, BotCreateInput, BotUpdateInput,
-  createBot, deleteBot,
-  getBot, getBotsForUser, updateBot
-} from '../../models/bot';
-import {
-  BotPermission, BotPermissionCreateInput, BotPermissionUpdateInput,
-  getBotPermissions, createBotPermission, updateBotPermission, deleteBotPermission
-} from '../../models/botPermission';
 import {GraphContext, Paginated} from '../typeDefs';
-import {getUser, User} from '../../models/user';
-import {getScriptLink, getScriptLinksForBot, ScriptLink} from '../../models/scriptLink';
 import {buildAvatarUrl} from '../../lib/discord';
+import Bot, {Platform} from '../../entities/Bot';
+import getBotRepo from '../../repos/BotRepo';
+import User from '../../entities/User';
+import getUserRepo from '../../repos/UserRepo';
+import {ScriptLink} from '../../entities/ScriptLink';
+import getScriptLinkRepo from '../../repos/ScriptLinkRepo';
+import {BotPermission, BotPermissionQualifierType} from '../../entities/BotPermission';
+import getBotPermRepo from '../../repos/BotPermissionRepo';
+
+export interface BotCreateInput {
+  platform: Platform;
+  token: string;
+}
+export interface BotUpdateInput {
+  id: string;
+  platform?: Platform;
+}
+
+export interface BotPermissionCreateInput {
+  name: string;
+  bot: string;
+}
+export interface BotPermissionUpdateInput {
+  id: string;
+  name?: string;
+  qualifiers?: BotPermissionQualifierInput[];
+}
+export interface BotPermissionQualifierInput {
+  id?: string;
+  delete?: true;
+  type: BotPermissionQualifierType;
+  value: string;
+}
 
 const botResolvers = {
   Query: {
     bot(parent: void, args: { id: string }, context: GraphContext): Promise<Bot | null> {
-      return getBot({
-        id: args.id,
-        user: context.user.id
-      });
+      return getBotRepo().findOneIfUserCanRead(args.id, context.user);
     },
     async bots(parent: void, args: void, context: GraphContext): Promise<Paginated<Bot>> {
-      const bots = await getBotsForUser(context.user.id);
+      const bots = await getBotRepo().find({resourceOwner: context.user.id});
       return {
         nodes: bots,
         totalCount: bots.length
@@ -30,87 +49,88 @@ const botResolvers = {
   },
   Mutation: {
     async createBot(parent: void, {bot}: {bot: BotCreateInput}, context: GraphContext): Promise<Bot> {
-      return createBot({
+      return getBotRepo().createAndSave({
         ...bot,
-        user: context.user.id
+        owner: context.user
       });
     },
-    async updateBot(parent: void, {bot}: {bot: BotUpdateInput}, context: GraphContext): Promise<Bot> {
-      return updateBot({
-        ...bot,
-        user: context.user.id
-      });
+    // Currently this is only used for changing the platform
+    async updateBot(parent: void, {bot: {id, platform}}: {bot: BotUpdateInput}, context: GraphContext): Promise<Bot> {
+      const botRepo = getBotRepo();
+      const bot = await botRepo.findOneIfUserCanRead(id, context.user);
+      if (!bot) throw new Error('Couldn\'t find that bot :(');
+      if (!platform) return bot; // idk why this would happen but 🤷‍
+
+      bot.platform = platform;
+      return await botRepo.save(bot);
     },
     async deleteBot(parent: void, args: {id: string}, context: GraphContext): Promise<string> {
-      return deleteBot({
-        id: args.id,
-        user: context.user.id
-      });
+      const botRepo = getBotRepo();
+      const bot = await botRepo.findOneIfUserCanRead(args.id, context.user);
+      if (!bot) throw new Error('Couldn\'t find that bot :(');
+      await botRepo.remove(bot);
+      return args.id;
     },
 
     async createBotPermission(parent: void, args: {perm: BotPermissionCreateInput}, context: GraphContext): Promise<BotPermission> {
-      return createBotPermission({
-        ...args.perm,
-        user: context.user.id
+      const bot = await getBotRepo().findOneIfUserCanRead(args.perm.bot, context.user);
+      if (!bot) throw new Error('404 bot not found?');
+
+      return getBotPermRepo().createAndSave({
+        bot,
+        name: args.perm.name
       });
     },
     async updateBotPermission(parent: void, args: {perm: BotPermissionUpdateInput}, context: GraphContext): Promise<BotPermission> {
-      return updateBotPermission({
-        ...args.perm,
-        user: context.user.id
-      });
+      // this is a nightmare function. procrastination time!
+      // TODO implement updateBotPermission
+      throw new Error('Not implemented yet!');
     },
     async deleteBotPermission(parent: void, args: {perm: string}, context: GraphContext): Promise<string> {
-      return deleteBotPermission({
-        id: args.perm,
-        user: context.user.id
-      });
+      const permRepo = getBotPermRepo();
+      const perm = await permRepo.findOne({id: args.perm});
+      if (!perm) throw new Error('That perm couldn\'t be found');
+      // check perms for perm
+      const bot = await getBotRepo().findOneIfUserCanRead(perm.botId, context.user);
+      if (!bot) throw new Error('That perm couldn\'t be found');
+
+      await permRepo.remove(perm);
+      return perm.id;
     }
   },
   Bot: {
     // id can default
     // name can default
     // platform can default
-    resourceOwner(parent: Bot): Promise<User> {
-      return getUser(parent.resource_owner) as Promise<User>;
-    },
-    apiKey(parent: Bot): string {
-      return parent.api_key;
+    async resourceOwner(parent: Bot): Promise<User> {
+      return await getUserRepo().findOne({id: parent.resourceOwner}) as User;
     },
     avatarUrl(parent: Bot): string {
-      return buildAvatarUrl(parent.discord_id, parent.avatar_hash);
+      return buildAvatarUrl(parent.discordId, parent.avatarHash || undefined);
     },
     // created can default
-    createdBy(parent: Bot): Promise<User | null> {
+    async createdBy(parent: Bot): Promise<User | null> {
       // Just being lazy and using the resource owner as creator
-      return getUser(parent.resource_owner) as Promise<User>;
+      return await getUserRepo().findOne({id: parent.resourceOwner}) as User;
     },
     connection(parent: Bot) {
       // Ooooh this is where things get fun
       // TODO get fun
     },
     async scripts(parent: Bot, args: void, context: GraphContext): Promise<Paginated<ScriptLink>> {
-      const scripts = await getScriptLinksForBot({
-        bot: parent.id,
-        user: context.user.id
-      });
+      // We can go ahead and load these scripts, because only trusted people can load the root bot
+      const scriptLinkRepo = getScriptLinkRepo();
+      const scripts = await scriptLinkRepo.find({botId: parent.id});
       return {
         nodes: scripts,
         totalCount: scripts.length
       };
     },
-    script(parent: Bot, args: {id: string}, context: GraphContext): Promise<ScriptLink | null> {
-      return getScriptLink({
-        bot: parent.id,
-        script: args.id,
-        user: context.user.id
-      });
+    async script(parent: Bot, args: {id: string}, context: GraphContext): Promise<ScriptLink | null> {
+      return await getScriptLinkRepo().findOne({botId: parent.id, scriptId: args.id}) || null;
     },
-    permissions(parent: Bot, args: void, context: GraphContext): Promise<BotPermission[]> {
-      return getBotPermissions({
-        bot: parent.id,
-        user: context.user.id
-      });
+    async permissions(parent: Bot, args: void, context: GraphContext): Promise<BotPermission[]> {
+      return await getBotPermRepo().find({botId: parent.id});
     }
     // options can default?
   },

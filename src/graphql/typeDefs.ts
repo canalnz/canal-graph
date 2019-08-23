@@ -1,6 +1,6 @@
 import {gql} from 'apollo-server';
-import {User} from '../db';
 import {GatewayServer} from '../gateway';
+import User from '../entities/User';
 
 export interface Paginated<T> {
   nodes: T[];

@@ -1,34 +1,41 @@
-import {ApolloServer, AuthenticationError} from 'apollo-server-express';
+import 'reflect-metadata';
+import {createConnection} from 'typeorm';
 import {startGatewayServer} from './gateway';
-import typeDefs, {GraphContext} from './graphql/typeDefs';
-import resolvers from './graphql/resolvers';
 import app from './www';
-import {authenticateHttpRequest} from './lib/auth';
+import setupGraphServer from './graphql';
 
 const HTTP_PORT = process.env.HTTP_PORT || 4000;
 const GATEWAY_PORT = process.env.GATEWAY_PORT || 4040;
+const DB_HOST = process.env.DB_HOST || 'localhost';
+const DB_USERNAME = process.env.DB_USERNAME || 'postgres';
+const DB_PASSWORD = process.env.DB_PASSWORD;
 
 async function main() {
-  const gateway = await startGatewayServer(+GATEWAY_PORT);
-  const server = new ApolloServer({
-    typeDefs,
-    resolvers,
-    tracing: true,
-    async context({req}): Promise<GraphContext> {
-      const authInfo = await authenticateHttpRequest(req);
-      if (!authInfo) throw new AuthenticationError('You must be logged in to view this API');
-      if (!authInfo.user) throw new AuthenticationError('Invalid Authorization');
-      return {
-        gateway,
-        user: authInfo.user,
-        token: authInfo.token
-      };
-    }
+  // Setup DB
+  const conn = await createConnection({
+    type: 'postgres',
+    host: DB_HOST,
+    port: 5432,
+    username: DB_USERNAME,
+    password: DB_PASSWORD,
+    entities: [
+      __dirname + '/entities/**/*.js'
+    ],
+    synchronize: true,
+    logging: ['error']
   });
-  server.applyMiddleware({app});
+
+  // Setup Gateway
+  const gateway = await startGatewayServer(+GATEWAY_PORT);
+
+  // Setup Graph
+  const graphServer = setupGraphServer(gateway);
+  graphServer.applyMiddleware({app});
+
+  // Setup Webserver
   app.listen({port: HTTP_PORT}, () => {
     // tslint:disable-next-line:no-console
-    console.log(`🚀 Server ready at http://localhost:${HTTP_PORT}${server.graphqlPath}`);
+    console.log(`🚀 GraphQL ready at http://localhost:${HTTP_PORT}${graphServer.graphqlPath}`);
   });
 }
 
