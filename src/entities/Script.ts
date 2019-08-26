@@ -3,7 +3,7 @@ import {Platform, platforms} from './Bot';
 
 export type ScriptState = 'RUNNING' | 'PASSIVE' | 'ERRORED' | 'STOPPED';
 
-@Entity()
+@Entity('scripts')
 export class Script {
   @PrimaryColumn('bigint')
   public id!: string;

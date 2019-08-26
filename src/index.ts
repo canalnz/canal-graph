@@ -21,8 +21,9 @@ async function main() {
     entities: [
       __dirname + '/entities/**/*.js'
     ],
-    synchronize: true,
+    synchronize: false,
     logging: ['error']
+    // logging: true
   });
 
   // Setup Gateway
@@ -35,7 +36,7 @@ async function main() {
   // Setup Webserver
   app.listen({port: HTTP_PORT}, () => {
     // tslint:disable-next-line:no-console
-    console.log(`🚀 GraphQL ready at http://localhost:${HTTP_PORT}${graphServer.graphqlPath}`);
+    console.log(`⚙️ GraphQL ready at http://localhost:${HTTP_PORT}${graphServer.graphqlPath}`);
   });
 }
 

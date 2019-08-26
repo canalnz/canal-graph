@@ -3,7 +3,7 @@ import {Column, CreateDateColumn, Entity, PrimaryColumn, UpdateDateColumn} from 
 export type Platform = 'NODEJS';
 export const platforms = ['NODEJS'];
 
-@Entity()
+@Entity('bots')
 export default class Bot {
   @PrimaryColumn('bigint')
   public id!: string;

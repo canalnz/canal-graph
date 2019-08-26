@@ -5,10 +5,12 @@ import getScriptRepo from '../../repos/ScriptRepo';
 import User from '../../entities/User';
 import getUserRepo from '../../repos/UserRepo';
 
+const newScriptName = 'untitled-script';
+
 interface ScriptCreateInput {
   name: string;
   body: string;
-  platform: Platform;
+  platform?: Platform;
 }
 interface ScriptUpdateInput {
   id: string;
@@ -31,11 +33,34 @@ const scriptResolvers = {
     }
   },
   Mutation: {
-    async createScript(parent: void, args: {script: ScriptCreateInput}, context: GraphContext): Promise<Script> {
-      return getScriptRepo().createAndSave({
-        ...args.script,
-        owner: context.user
-      });
+    async createScript(parent: void, args: {script?: ScriptCreateInput}, context: GraphContext): Promise<Script> {
+      // Find next available untitled-script-* slot
+      const scriptRepo = getScriptRepo();
+      if (!args.script) {
+        const matchingScripts = await scriptRepo.createQueryBuilder('script')
+          .where('script.name LIKE :name', {name: newScriptName + '%'})
+          .getMany();
+        let nextName = newScriptName;
+        if (matchingScripts.length) {
+          // Find the maximum number
+          // Convert names to the number contained at the end
+          const nums = matchingScripts.map((s) => parseInt(s.name.substr(newScriptName.length + 1), 10) || 0);
+          nextName += '-' + (Math.max(...nums) + 1);
+        }
+        return await scriptRepo.createAndSave({
+          name: nextName,
+          body: '',
+          platform: 'NODEJS',
+          owner: context.user
+        });
+      } else {
+        return scriptRepo.createAndSave({
+          name: args.script.name,
+          body: args.script.body,
+          platform: args.script.platform || 'NODEJS',
+          owner: context.user
+        });
+      }
     },
     async updateScript(parent: void, args: {script: ScriptUpdateInput}, context: GraphContext): Promise<Script> {
       const scriptRepo = getScriptRepo();

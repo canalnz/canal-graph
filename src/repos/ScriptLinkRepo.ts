@@ -8,7 +8,7 @@ export interface CreateScriptLinkData {
   user: User;
 }
 
-@EntityRepository()
+@EntityRepository(ScriptLink)
 export class ScriptLinkRepo extends Repository<ScriptLink> {
   public async createAndSave({script, bot, user}: CreateScriptLinkData): Promise<ScriptLink> {
     const link = new ScriptLink();

@@ -64,10 +64,10 @@ const scriptLinkResolvers = {
     async state(parent: ScriptLink): Promise<ScriptState> {
       return 'ERRORED';
     },
-    // added can default
-    async addedBy(parent: ScriptLink): Promise<User | null> {
-      if (!parent.addedBy) return null;
-      return await getUserRepo().findOne({id: parent.addedBy}) || null;
+    // created can default
+    async createdBy(parent: ScriptLink): Promise<User | null> {
+      if (!parent.createdBy) return null;
+      return await getUserRepo().findOne({id: parent.createdBy}) || null;
     }
   },
 };

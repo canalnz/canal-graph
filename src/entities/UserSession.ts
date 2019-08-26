@@ -7,7 +7,7 @@ import {
 import {AuthProvider, authProviders} from './UserAuthMethod';
 import User from './User';
 
-@Entity()
+@Entity('user_sessions')
 export default class UserSession {
   // @ManyToOne(type => User)
   @PrimaryColumn({

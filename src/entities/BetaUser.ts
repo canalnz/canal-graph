@@ -1,6 +1,6 @@
 import {CreateDateColumn, Entity, PrimaryColumn} from 'typeorm';
 
-@Entity('betausers')
+@Entity('beta_users')
 export default class BetaUser {
   @PrimaryColumn({
     name: 'discord_id',

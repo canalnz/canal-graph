@@ -3,7 +3,7 @@ import {Column, Entity, PrimaryColumn} from 'typeorm';
 export type BotPermissionQualifierType = 'USER' | 'ROLE' | 'CHANNEL' | 'GUILD';
 export const botPermissionQualifierTypes = ['USER', 'ROLE', 'CHANNEL', 'GUILD'];
 
-@Entity()
+@Entity('bot_permissions')
 export class BotPermission {
   @PrimaryColumn('bigint')
   public id!: string;
@@ -20,7 +20,7 @@ export class BotPermission {
 
 // They're tiny! I'm sure it's fine...
 // tslint:disable-next-line:max-classes-per-file
-@Entity()
+@Entity('bot_permission_qualifiers')
 export class BotPermissionQualifier {
   @PrimaryColumn('bigint')
   public id!: string;

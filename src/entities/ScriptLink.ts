@@ -1,6 +1,6 @@
 import {Column, CreateDateColumn, Entity, PrimaryColumn} from 'typeorm';
 
-@Entity()
+@Entity('script_links')
 export class ScriptLink {
   @PrimaryColumn({
     name: 'bot_id',
@@ -22,12 +22,12 @@ export class ScriptLink {
   public lastStarted!: Date | null;
 
   @CreateDateColumn()
-  public added!: Date;
+  public created!: Date;
 
   @Column({
-    name: 'added_by',
+    name: 'created_by',
     type: 'bigint',
     nullable: true
   })
-  public addedBy!: string | null;
+  public createdBy!: string | null;
 }

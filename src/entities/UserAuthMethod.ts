@@ -3,7 +3,7 @@ import {Column, CreateDateColumn, Entity, PrimaryColumn} from 'typeorm';
 export type AuthProvider = 'PASSWORD' | 'DISCORD' | 'GITHUB' | 'GOOGLE';
 export const authProviders: AuthProvider[] = ['PASSWORD', 'DISCORD', 'GITHUB', 'GOOGLE'];
 
-@Entity()
+@Entity('user_auth_methods')
 export default class UserAuthMethod {
   // TODO Fix relations
   // @ManyToOne(type => User)

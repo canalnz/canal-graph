@@ -67,10 +67,13 @@ const typeDefs = gql`
     type Bot {
         id: String!
         name: String!
-        platform: Platform!
-        resourceOwner: User!
-        apiKey: String!
+        discriminator: String
+        discordId: String
+        token: String!
         avatarUrl: String
+        platform: Platform!
+        apiKey: String!
+        resourceOwner: User!
         created: Date!
         createdBy: User
         connection: BotConnection
@@ -98,13 +101,10 @@ const typeDefs = gql`
     input BotCreateInput {
         platform: String!
         token: String
-        deviceCode: String!
     }
     input BotUpdateInput {
         id: String!
-        name: String
         platform: String
-        options: BotOptionsInput
     }
 
     # Jesus christ this is a lot of types for a tiny feature
@@ -157,8 +157,8 @@ const typeDefs = gql`
     }
     input ScriptCreateInput {
         name: String!
-        body: String
-        platform: Platform!
+        body: String!
+        platform: Platform
     }
     input ScriptUpdateInput {
         id: String!
@@ -172,8 +172,8 @@ const typeDefs = gql`
         bot: Bot!
         lastStarted: Date!
         state: ScriptState
-        added: Date!
-        addedBy: User
+        created: Date!
+        createdBy: User
     }
     type ScriptLinks {
         totalCount: Int!
@@ -192,7 +192,7 @@ const typeDefs = gql`
 
     type Mutation {
         # Script CRUD
-        createScript(script: ScriptCreateInput!): Script
+        createScript(script: ScriptCreateInput): Script
         updateScript(script: ScriptUpdateInput!): Script
         deleteScript(script: String!): String!
 
@@ -200,6 +200,7 @@ const typeDefs = gql`
         addScriptToBot(script: String!, bot: String!): ScriptLink!
         removeScriptFromBot(script: String!, bot: String!): String!
         restartScriptOnBot(script: String!, bot: String!): ScriptLink!
+        restartScriptEverywhere(script: String!): [ScriptLink]!
 
         # Bot CRUD
         createBot(bot: BotCreateInput!): Bot
@@ -216,7 +217,6 @@ const typeDefs = gql`
         destroySession: String!
         destroyAllSessions(user: String): String!
     }
-
 `;
 
 export default typeDefs;
