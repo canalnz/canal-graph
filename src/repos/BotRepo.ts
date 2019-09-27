@@ -16,7 +16,7 @@ export class BotRepository extends Repository<Bot> {
   public async findOneIfUserCanRead(id: string, user: User): Promise<Bot | null> {
     // It's only going to find it if it both exists *and* is owned by the user
     // Basically 404s rather than 403ing when perms aren't ok
-    return await this.findOne({id, resourceOwner: user.id}) || null;
+    return await this.findOne({id, resourceOwnerId: user.id}) || null;
   }
   public async createAndSave({platform, token, owner}: CreateBotData): Promise<Bot> {
     const botData = await getBotSelf(token);
@@ -28,8 +28,8 @@ export class BotRepository extends Repository<Bot> {
     bot.apiKey = crypto.randomBytes(32).toString('hex');
     bot.token = token;
     bot.platform = platform;
-    bot.resourceOwner = owner.id;
-    bot.createdBy = owner.id;
+    bot.resourceOwnerId = owner.id;
+    bot.createdById = owner.id;
 
     bot.name = botData.username;
     bot.discriminator = botData.discriminator;

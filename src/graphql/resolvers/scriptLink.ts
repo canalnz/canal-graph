@@ -7,6 +7,7 @@ import getBotRepo from '../../repos/BotRepo';
 import getScriptRepo from '../../repos/ScriptRepo';
 import User from '../../entities/User';
 import getUserRepo from '../../repos/UserRepo';
+import {gateway} from '../../gateway/connector';
 
 export interface LinkId {
   script: string;
@@ -17,7 +18,10 @@ const scriptLinkResolvers = {
   Query: {},
   Mutation: {
     async addScriptToBot(parent: void, args: LinkId, context: GraphContext): Promise<ScriptLink> {
-      return await getScriptLinkRepo().createAndSave({
+      const linkRepo = getScriptLinkRepo();
+      const existingLink = await linkRepo.findOne({botId: args.bot, scriptId: args.script});
+      if (existingLink) throw new Error('That script is already added to that bot!');
+      return await linkRepo.createAndSave({
         script: args.script,
         bot: args.bot,
         user: context.user
@@ -33,11 +37,10 @@ const scriptLinkResolvers = {
       if (!link) throw new Error('Link not found');
 
       await linkRepo.remove(link);
-      return link.scriptId;
+
+      return args.script;
     },
     async restartScriptOnBot(parent: void, args: LinkId, context: GraphContext): Promise<ScriptLink> {
-      // It should crash and burn if it doesn't exist anyway
-      // TODO the restartey part of restarting
       // Validate bot's existence and perms
       const bot = await getBotRepo().findOneIfUserCanRead(args.bot, context.user);
       if (!bot) throw new Error('Bot not found');
@@ -46,6 +49,7 @@ const scriptLinkResolvers = {
       const link = await linkRepo.findOne({scriptId: args.script, botId: args.bot});
       if (!link) throw new Error('Link not found');
 
+      linkRepo.restart(link);
       return link;
     }
   },
@@ -66,8 +70,8 @@ const scriptLinkResolvers = {
     },
     // created can default
     async createdBy(parent: ScriptLink): Promise<User | null> {
-      if (!parent.createdBy) return null;
-      return await getUserRepo().findOne({id: parent.createdBy}) || null;
+      if (!parent.createdById) return null;
+      return await getUserRepo().findOne({id: parent.createdById}) || null;
     }
   },
 };

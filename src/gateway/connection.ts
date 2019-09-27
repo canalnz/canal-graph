@@ -11,6 +11,7 @@ export class Connection extends EventEmitter {
   constructor(private socket: WebSocket, request: http.IncomingMessage) {
     super();
     this.socket.on('message', (d) => this.handleMessage(d));
+    this.socket.on('close', (c, m) => this.onClose(c, m));
     this.send('HELLO', {
       heartbeat: heartbeatInterval
     });
@@ -19,11 +20,14 @@ export class Connection extends EventEmitter {
     this.handleHeartbeat();
   }
   public kill(error: Error|GatewayError) {
+    if (!(error instanceof GatewayError)) {
+      console.error('Fatal exception in connection!');
+      console.dir(error);
+    }
     // Coerce into a gateway error
-    const gatewayErr = error instanceof GatewayError ? error : new GatewayError(4000, error.message);
-    console.log(`Killing connection: ${error}`);
+    const gatewayErr = error instanceof GatewayError ? error : new GatewayError(4000, 'An internal error occurred');
+    console.log(`Killing connection: ${gatewayErr}`);
     this.socket.close(gatewayErr.code, this.serialize(gatewayErr.payload));
-    this.socket.on('close', (c, m) => this.onClose(c, m));
   }
   public send(eventName: string, payload?: any): void {
     console.log(`> ${eventName}`);
@@ -50,7 +54,6 @@ export class Connection extends EventEmitter {
     return JSON.parse(v.toString());
   }
   private onClose(code: number, message: string): void {
-    console.log('socket got closed?');
     // Currently just bubble the event up
     if (this.heartbeatTimeoutId) clearInterval(this.heartbeatTimeoutId);
     this.emit('close', code, message);

@@ -1,4 +1,5 @@
-import {Column, Entity, PrimaryColumn} from 'typeorm';
+import {Column, Entity, JoinColumn, ManyToOne, PrimaryColumn} from 'typeorm';
+import Bot from './Bot';
 
 export type BotPermissionQualifierType = 'USER' | 'ROLE' | 'CHANNEL' | 'GUILD';
 export const botPermissionQualifierTypes = ['USER', 'ROLE', 'CHANNEL', 'GUILD'];
@@ -7,6 +8,10 @@ export const botPermissionQualifierTypes = ['USER', 'ROLE', 'CHANNEL', 'GUILD'];
 export class BotPermission {
   @PrimaryColumn('bigint')
   public id!: string;
+
+  @ManyToOne((type) => Bot, {lazy: true})
+  @JoinColumn({name: 'bot_id'})
+  public bot!: Promise<Bot>;
 
   @Column({
     name: 'bot_id',
@@ -24,6 +29,10 @@ export class BotPermission {
 export class BotPermissionQualifier {
   @PrimaryColumn('bigint')
   public id!: string;
+
+  @ManyToOne((type) => BotPermission, {lazy: true})
+  @JoinColumn({name: 'perm_id'})
+  public perm!: Promise<BotPermission>;
 
   @Column({
     name: 'perm_id',

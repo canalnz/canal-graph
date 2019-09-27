@@ -1,4 +1,15 @@
-import {Column, CreateDateColumn, Entity, PrimaryColumn, UpdateDateColumn} from 'typeorm';
+import {
+  Column,
+  CreateDateColumn,
+  Entity,
+  JoinColumn,
+  ManyToOne,
+  OneToMany,
+  PrimaryColumn,
+  UpdateDateColumn
+} from 'typeorm';
+import User from './User';
+import {ScriptLink} from './ScriptLink';
 
 export type Platform = 'NODEJS';
 export const platforms = ['NODEJS'];
@@ -43,34 +54,35 @@ export default class Bot {
   })
   public apiKey!: string;
 
-  // @ManyToOne(type => User)
-  @Column({
-    name: 'resource_owner',
-    type: 'bigint'
-  })
-  public resourceOwner!: string;
+  @ManyToOne((type) => User, (user) => user.bots, {lazy: true})
+  @JoinColumn({name: 'resource_owner'})
+  public resourceOwner!: Promise<User>;
+
+  @Column({name: 'resource_owner', type: 'bigint'})
+  public resourceOwnerId!: string;
 
   @CreateDateColumn()
   public created!: string;
 
-  // @ManyToOne(type => User)
-  @Column({
-    name: 'created_by',
-    type: 'bigint',
-    nullable: true
-  })
-  public createdBy!: string | null;
+  @ManyToOne(type => User, {lazy: true, nullable: true})
+  @JoinColumn({name: 'created_by'})
+  public createdBy!: Promise<string | null>;
+
+  @Column({name: 'created_by', type: 'bigint', nullable: true})
+  public createdById!: string | null;
 
   @UpdateDateColumn({
     nullable: true
   })
   public updated!: Date | null;
 
-  // @ManyToOne(type => User)
-  @Column({
-    name: 'updated_by',
-    type: 'bigint',
-    nullable: true
-  })
-  public updatedBy!: string | null;
+  @ManyToOne(type => User, {lazy: true, nullable: true})
+  @JoinColumn({name: 'updated_by'})
+  public updatedBy!: Promise<string | null>;
+
+  @Column({name: 'updated_by', type: 'bigint', nullable: true})
+  public updatedById!: string | null;
+
+  @OneToMany((type) => ScriptLink, (link) => link.bot, {lazy: true})
+  public scripts!: Promise<ScriptLink[]>;
 }

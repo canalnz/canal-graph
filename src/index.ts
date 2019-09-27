@@ -1,33 +1,17 @@
 import 'reflect-metadata';
-import {createConnection} from 'typeorm';
-import {startGatewayServer} from './gateway';
 import app from './www';
 import setupGraphServer from './graphql';
+import {gateway} from './gateway/connector';
+import {createDbConnection} from './lib/database';
 
 const HTTP_PORT = process.env.HTTP_PORT || 4000;
-const GATEWAY_PORT = process.env.GATEWAY_PORT || 4040;
-const DB_HOST = process.env.DB_HOST || 'localhost';
-const DB_USERNAME = process.env.DB_USERNAME || 'postgres';
-const DB_PASSWORD = process.env.DB_PASSWORD;
 
 async function main() {
   // Setup DB
-  const conn = await createConnection({
-    type: 'postgres',
-    host: DB_HOST,
-    port: 5432,
-    username: DB_USERNAME,
-    password: DB_PASSWORD,
-    entities: [
-      __dirname + '/entities/**/*.js'
-    ],
-    synchronize: false,
-    logging: ['error']
-    // logging: true
-  });
+  const conn = createDbConnection();
 
   // Setup Gateway
-  const gateway = await startGatewayServer(+GATEWAY_PORT);
+  await gateway.setup();
 
   // Setup Graph
   const graphServer = setupGraphServer(gateway);

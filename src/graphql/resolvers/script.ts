@@ -22,10 +22,10 @@ interface ScriptUpdateInput {
 const scriptResolvers = {
   Query: {
     async script(parent: void, args: {id: string}, context: GraphContext): Promise<Script | null> {
-      return await getScriptRepo().findOne({resourceOwner: context.user.id, id: args.id}) || null;
+      return await getScriptRepo().findOne({resourceOwnerId: context.user.id, id: args.id}) || null;
     },
     async scripts(parent: void, args: void, context: GraphContext): Promise<Paginated<Script>> {
-      const scripts = await getScriptRepo().find({resourceOwner: context.user.id});
+      const scripts = await getScriptRepo().find({resourceOwnerId: context.user.id});
       return {
         nodes: scripts,
         totalCount: scripts.length
@@ -88,17 +88,17 @@ const scriptResolvers = {
     // platform can probably default
     async resourceOwner(parent: Script): Promise<User> {
       // Casting *should* be safe, because if the resource_owner doesn't exist, the resource will have been deleted
-      return await getUserRepo().findOne({id: parent.resourceOwner}) as User;
+      return await getUserRepo().findOne({id: parent.resourceOwnerId}) as User;
     },
     // created can default
     async createdBy(parent: Script): Promise<User | null> {
-      if (!parent.createdBy) return null;
-      return await getUserRepo().findOne({id: parent.createdBy}) || null;
+      if (!parent.createdById) return null;
+      return await getUserRepo().findOne({id: parent.createdById}) || null;
     },
     // updated can default
     async updatedBy(parent: Script): Promise<User | null> {
-      if (!parent.updatedBy) return null;
-      return await getUserRepo().findOne({id: parent.updatedBy}) || null;
+      if (!parent.updatedById) return null;
+      return await getUserRepo().findOne({id: parent.updatedById}) || null;
     }
   }
 };

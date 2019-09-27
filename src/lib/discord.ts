@@ -1,5 +1,4 @@
 import fetch from 'node-fetch';
-import User from '../entities/User';
 
 const DISCORD_API_BASE = 'https://discordapp.com/api/v6';
 const DISCORD_CDN = 'https://cdn.discordapp.com';
@@ -9,13 +8,20 @@ export interface Headers {
   [headerName: string]: string;
 }
 
-export function buildAvatarUrl(user: string, hash?: string, size?: string): string {
-  if (!hash) {
-    console.warn('We should fix user data someday');
-    // TODO avatars aren't defaulting correctly
-    return DISCORD_CDN + '/embed/avatars/1.png';
+export class DiscordAPIError extends Error {
+  constructor(public code: string, public message: string) {
+    super();
   }
-  return DISCORD_CDN + '/avatars/' + user + '/' + hash + '.png';
+}
+
+export function buildAvatarUrl(user: string, hash?: string, size?: number): string {
+  const sizeString = size ? '?size=' + size : '';
+  if (!hash) {
+    // TODO Implement discriminator based defaults
+    console.warn('We should fix user data someday');
+    return DISCORD_CDN + '/embed/avatars/1.png' + sizeString;
+  }
+  return DISCORD_CDN + '/avatars/' + user + '/' + hash + '.png' + sizeString;
 }
 
 export interface DiscordUser {
@@ -61,6 +67,6 @@ export async function discordRestRequest<T>({
     headers
   });
   const body = await r.json();
-  if (!r.ok) throw new Error(`[Error ${body.code}] ${body.message}`);
+  if (!r.ok) throw new DiscordAPIError(body.code, body.message);
   return body;
 }

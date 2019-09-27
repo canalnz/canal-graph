@@ -40,7 +40,7 @@ const botResolvers = {
       return getBotRepo().findOneIfUserCanRead(args.id, context.user);
     },
     async bots(parent: void, args: void, context: GraphContext): Promise<Paginated<Bot>> {
-      const bots = await getBotRepo().find({resourceOwner: context.user.id});
+      const bots = await getBotRepo().find({resourceOwnerId: context.user.id});
       return {
         nodes: bots,
         totalCount: bots.length
@@ -103,7 +103,7 @@ const botResolvers = {
     // name can default
     // platform can default
     async resourceOwner(parent: Bot): Promise<User> {
-      return await getUserRepo().findOne({id: parent.resourceOwner}) as User;
+      return await getUserRepo().findOneOrFail({id: parent.resourceOwnerId});
     },
     avatarUrl(parent: Bot): string {
       return buildAvatarUrl(parent.discordId, parent.avatarHash || undefined);
@@ -111,7 +111,7 @@ const botResolvers = {
     // created can default
     async createdBy(parent: Bot): Promise<User | null> {
       // Just being lazy and using the resource owner as creator
-      return await getUserRepo().findOne({id: parent.resourceOwner}) as User;
+      return await getUserRepo().findOne({id: parent.resourceOwnerId}) || null;
     },
     connection(parent: Bot) {
       // Ooooh this is where things get fun

@@ -1,4 +1,8 @@
-import {Column, CreateDateColumn, Entity, PrimaryColumn} from 'typeorm';
+import {Column, CreateDateColumn, Entity, OneToMany, PrimaryColumn} from 'typeorm';
+import Bot from './Bot';
+import {Script} from './Script';
+import UserAuthMethod from './UserAuthMethod';
+import UserSession from './UserSession';
 
 @Entity('users')
 export default class User {
@@ -30,4 +34,16 @@ export default class User {
     nullable: true
   })
   public lastLogin!: Date | null;
+
+  @OneToMany((type) => Bot, (bot) => bot.resourceOwner, {lazy: true})
+  public bots!: Promise<Bot[]>;
+
+  @OneToMany((type) => Script, (script) => script.resourceOwner, {lazy: true})
+  public scripts!: Promise<Script[]>;
+
+  @OneToMany((type) => UserAuthMethod, (method) => method.user, {lazy: true})
+  public authMethods!: Promise<UserAuthMethod[]>;
+
+  @OneToMany((type) => UserSession, (sess) => sess.user, {lazy: true})
+  public sessions!: Promise<UserSession[]>;
 }

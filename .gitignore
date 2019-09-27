@@ -1,5 +1,6 @@
 dist
 .idea
+*.secret.*
 
 # Created by .ignore support plugin (hsz.mobi)
 ### Linux template
