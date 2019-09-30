@@ -6,7 +6,7 @@ import getAuthMethodRepo from '../repos/UserAuthMethodRepo';
 import getSessRepo from '../repos/UserSessionRepo';
 import User from '../entities/User';
 
-const APP_BASE_URL = 'http://localhost:8081';
+const APP_BASE_URL = process.env.NODE_ENV === 'dev' ? 'http://localhost:8081' : 'https://canal.pointless.me';
 const DISCORD_TOKEN_ENDPOINT = 'https://discordapp.com/api/v6/oauth2/token';
 const DISCORD_SELF_ENDPOINT = 'https://discordapp.com/api/v6/users/@me';
 const DISCORD_CLIENT_ID = process.env.DISCORD_CLIENT_ID;

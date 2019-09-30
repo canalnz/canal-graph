@@ -1,0 +1,31 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: canal-api-deployment
+  labels:
+    app: canal
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: canal
+  template:
+    metadata:
+      labels:
+        app: canal
+    spec:
+      containers:
+        - name: canal-api
+          image: gcr.io/canalapp/canal-api:0.1
+          imagePullPolicy: Always
+          ports:
+            - name: http-api
+              containerPort: 4080
+            - name: gateway
+              containerPort: 4000
+          env:
+            - name: DB_HOST
+              value: 10.97.176.3
+          envFrom:
+            - secretRef:
+                name: canal-api-prod-creds

@@ -1,32 +1,24 @@
 import {Connection, createConnection} from 'typeorm';
 import * as path from 'path';
 
-const DB_HOST = process.env.DB_HOST || 'localhost';
-const DB_USERNAME = process.env.DB_USERNAME || 'postgres';
-const DB_PASSWORD = process.env.DB_PASSWORD;
-const DB_PORT = +(process.env.DB_PORT || 5432);
-
 export interface DatabaseConnectionOptions {
   host?: string;
+  database?: string;
   username?: string;
-  password?: string;
+  password: string;
   port?: number;
 }
 
 export async function createDbConnection({
-  host = DB_HOST,
-  username = DB_USERNAME,
-  password = DB_PASSWORD,
-  port = DB_PORT
-}: DatabaseConnectionOptions = {
-  host: DB_HOST,
-  username: DB_USERNAME,
-  password: DB_PASSWORD,
-  port: DB_PORT
-}): Promise<Connection> {
+  host = 'localhost',
+  username = 'postgres',
+  database = 'canal',
+  password,
+  port = 5432
+}: DatabaseConnectionOptions): Promise<Connection> {
   return await createConnection({
     type: 'postgres',
-    database: 'canal',
+    database,
     host,
     port,
     username,

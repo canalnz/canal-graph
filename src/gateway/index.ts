@@ -6,13 +6,18 @@ import 'reflect-metadata';
 import {GatewayServer, startGatewayServer} from './server';
 import {createDbConnection} from '../lib/database';
 
+const DB_HOST = process.env.DB_HOST || 'localhost';
+const DB_USERNAME = process.env.DB_USERNAME || 'postgres';
+const DB_PASSWORD = process.env.DB_PASSWORD as string; // This cast isn't safe, but typescript isn't noticing the guard?
+const DB_PORT = +(process.env.DB_PORT || 5432);
+
 export type GatewayCommsMessage<T> = [T, any];
 export type GatewayCommsEventName = 'SERVER_READY' | 'SCRIPT_STATE_CHANGE' | 'CLIENT_STATE_UPDATE';
 export type GatewayCommsEvent = GatewayCommsMessage<GatewayCommsEventName>;
 export type GatewayCommsCommandName = 'BROADCAST' | 'DIRECT';
 export type GatewayCommsCommand = GatewayCommsMessage<GatewayCommsCommandName>;
 
-const port = process.env.GATEWAY_PORT || process.env.PORT || 80;
+const port = process.env.GATEWAY_PORT || process.env.PORT || 4000;
 
 if (!process.send || module.parent) {
   throw new Error('This module is designed to be run in a forked process.' +
@@ -21,7 +26,12 @@ if (!process.send || module.parent) {
 
 async function main() {
   // This is a separate process. We need to instantiate the DB again
-  const conn = await createDbConnection();
+  const conn = await createDbConnection({
+    host: DB_HOST,
+    username: DB_USERNAME,
+    password: DB_PASSWORD,
+    port: DB_PORT
+  });
   const server = await startGatewayServer(+port);
   process.on('message', (m) => handleCommand(m, server));
   sendEvent('SERVER_READY');

@@ -3,14 +3,14 @@
     "module": "commonjs",
     "moduleResolution": "node",
     "target": "es2017",
-    "strict": true,
     "noImplicitAny": true,
     "removeComments": true,
     "preserveConstEnums": true,
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
     "sourceMap": true,
-    "outDir": "dist"
+    "outDir": "dist",
+    "allowSyntheticDefaultImports": true
   },
   "include": [
     "src/**/*"
