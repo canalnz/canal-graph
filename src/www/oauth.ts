@@ -3,7 +3,7 @@ import fetch from 'node-fetch';
 import * as url from 'url';
 import getUserRepo from '../repos/UserRepo';
 import getAuthMethodRepo from '../repos/UserAuthMethodRepo';
-import getSessRepo from '../repos/UserSessionRepo';
+import {getSessRepo} from '@canalapp/shared/db';
 import User from '../entities/User';
 
 const APP_BASE_URL = process.env.NODE_ENV === 'dev' ? 'http://localhost:8081' : 'https://canal.pointless.me';

@@ -1,6 +1,5 @@
 import * as http from 'http';
-import User from '../entities/User';
-import getUserRepo from '../repos/UserRepo';
+import {User, getUserRepo} from '@canalapp/shared';
 
 export async function authenticateHttpRequest(req: http.IncomingMessage):
   Promise<{user: User | null, token: string} | null> {

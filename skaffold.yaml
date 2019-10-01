@@ -1,0 +1,11 @@
+apiVersion: skaffold/v1beta15
+kind: Config
+metadata:
+  name: canal-api
+build:
+  artifacts:
+  - image: gcr.io/canalapp/canal-api
+deploy:
+  kubectl:
+    manifests:
+    - canalapi.yaml

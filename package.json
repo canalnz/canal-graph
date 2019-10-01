@@ -19,6 +19,7 @@
   },
   "homepage": "https://github.com/asherfoster/canal-api#readme",
   "devDependencies": {
+    "@canalapp/shared": "latest",
     "@types/flake-idgen": "^0.1.30",
     "@types/graphql": "^14.2.2",
     "@types/graphql-iso-date": "^3.3.1",
