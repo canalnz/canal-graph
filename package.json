@@ -19,30 +19,25 @@
   },
   "homepage": "https://github.com/asherfoster/canal-api#readme",
   "devDependencies": {
-    "@canalapp/shared": "latest",
-    "@types/flake-idgen": "^0.1.30",
+    "@canalapp/shared": "github:asherfoster/canal-shared",
     "@types/graphql": "^14.2.2",
-    "@types/graphql-iso-date": "^3.3.1",
     "@types/jest": "^24.0.18",
     "@types/node": "^12.7.8",
-    "@types/node-fetch": "^2.5.0",
+    "@types/node-fetch": "^2.5.2",
     "jest": "^24.9.0",
     "ts-jest": "^24.1.0",
     "tslint": "^5.12.1",
-    "typescript": "^3.6.3",
-    "vrsource-tslint-rules": "^6.0.0"
+    "typescript": "^3.6.3"
   },
   "dependencies": {
+    "@google-cloud/pubsub": "^1.1.0",
     "apollo-server": "^2.9.4",
     "apollo-server-express": "^2.9.4",
-    "biguint-format": "^1.0.1",
     "express": "^4.17.1",
-    "flake-idgen": "^1.1.2",
     "graphql": "^14.4.2",
     "node-fetch": "^2.6.0",
     "pg": "^7.12.1",
     "reflect-metadata": "^0.1.13",
-    "typeorm": "^0.2.18",
     "ws": "^7.1.0"
   }
 }

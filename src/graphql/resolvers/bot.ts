@@ -1,13 +1,15 @@
 import {GraphContext, Paginated} from '../typeDefs';
-import {buildAvatarUrl} from '../../lib/discord';
-import Bot, {Platform} from '../../entities/Bot';
-import getBotRepo from '../../repos/BotRepo';
-import User from '../../entities/User';
-import getUserRepo from '../../repos/UserRepo';
-import {ScriptLink} from '../../entities/ScriptLink';
-import getScriptLinkRepo from '../../repos/ScriptLinkRepo';
-import {BotPermission, BotPermissionQualifierType} from '../../entities/BotPermission';
-import getBotPermRepo from '../../repos/BotPermissionRepo';
+import {buildAvatarUrl} from '@canalapp/shared/dist/util/discord';
+import {
+  Bot,
+  BotPermission, BotPermissionQualifierType,
+  getBotPermRepo,
+  getBotRepo,
+  getScriptLinkRepo,
+  getUserRepo,
+  Platform, ScriptLink,
+  User
+} from '@canalapp/shared/dist/db';
 
 export interface BotCreateInput {
   platform: Platform;

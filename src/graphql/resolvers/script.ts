@@ -1,9 +1,5 @@
 import {GraphContext, Paginated} from '../typeDefs';
-import {Platform} from '../../entities/Bot';
-import {Script} from '../../entities/Script';
-import getScriptRepo from '../../repos/ScriptRepo';
-import User from '../../entities/User';
-import getUserRepo from '../../repos/UserRepo';
+import {getScriptRepo, getUserRepo, Platform, Script, User} from '@canalapp/shared/dist/db';
 
 const newScriptName = 'untitled-script';
 

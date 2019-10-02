@@ -2,7 +2,7 @@ import 'reflect-metadata';
 import app from './www';
 import setupGraphServer from './graphql';
 import {gateway} from './gateway/connector';
-import {createDbConnection} from './lib/database';
+import {createDbConnection} from '@canalapp/shared/dist/db';
 
 const DB_HOST = process.env.DB_HOST || 'localhost';
 const DB_USERNAME = process.env.DB_USERNAME || 'postgres';

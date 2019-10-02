@@ -1,8 +1,5 @@
 import * as EventEmitter from 'events';
-import getScriptLinkRepo from '../repos/ScriptLinkRepo';
-import getScriptRepo from '../repos/ScriptRepo';
-import {Script} from '../entities/Script';
-import Bot from '../entities/Bot';
+import {getScriptLinkRepo, getScriptRepo, Script, Bot} from '@canalapp/shared/dist/db';
 import Connection from './connection';
 
 export type IncomingEventName = 'HEARTBEAT' | 'IDENTIFY' | 'CLIENT_STATUS_UPDATE' | 'SCRIPT_STATUS_UPDATE';

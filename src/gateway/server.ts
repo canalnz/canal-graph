@@ -3,12 +3,16 @@ import Client, {OutgoingEventName} from './client';
 import * as http from 'http';
 import Connection from './connection';
 import {authenticateConnection} from './doorman';
+import {pubsub} from '@canalapp/shared';
+import {Subscription} from '@google-cloud/pubsub';
 
 export class GatewayServer {
   private server: WebSocket.Server;
   private clients: Map<string, Client> = new Map();
+  private scriptUpdateSub: Subscription;
   constructor(private port: number) {
     this.server = new WebSocket.Server({port});
+    this.configureSubscriptions();
     this.server.on('listening', (...args) => this.onListening(...args));
     this.server.on('connection', (...args) => this.onConnection(...args));
   }
@@ -19,6 +23,9 @@ export class GatewayServer {
     }
   }
 
+  private async configureSubscriptions() {
+    this.scriptUpdateSub = pubsub.topic('script-update').subscription('gateway-instance');
+  }
   private onListening() {
     console.log('⚙️ Gateway is listening on port ' + this.port);
   }

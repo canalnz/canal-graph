@@ -1,13 +1,6 @@
 import {GraphContext} from '../typeDefs';
-import {ScriptLink} from '../../entities/ScriptLink';
-import {Script, ScriptState} from '../../entities/Script';
-import Bot from '../../entities/Bot';
-import getScriptLinkRepo from '../../repos/ScriptLinkRepo';
-import getBotRepo from '../../repos/BotRepo';
-import getScriptRepo from '../../repos/ScriptRepo';
-import User from '../../entities/User';
-import getUserRepo from '../../repos/UserRepo';
-import {gateway} from '../../gateway/connector';
+import {ScriptLink, Script, ScriptState, Bot, User,
+  getScriptLinkRepo, getBotRepo, getScriptRepo, getUserRepo} from '@canalapp/shared/dist/db';
 
 export interface LinkId {
   script: string;

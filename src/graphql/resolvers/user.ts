@@ -1,8 +1,6 @@
 import {GraphContext} from '../typeDefs';
-import {buildAvatarUrl} from '../../lib/discord';
-import User from '../../entities/User';
-import getSessRepo from '../../repos/UserSessionRepo';
-import getAuthMethodRepo from '../../repos/UserAuthMethodRepo';
+import {buildAvatarUrl} from '@canalapp/shared/dist/util/discord';
+import {getAuthMethodRepo, getSessRepo, User} from '@canalapp/shared/dist/db';
 
 const resolvers = {
   Query: {

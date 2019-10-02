@@ -1,14 +1,11 @@
 import * as express from 'express';
 import fetch from 'node-fetch';
 import * as url from 'url';
-import getUserRepo from '../repos/UserRepo';
-import getAuthMethodRepo from '../repos/UserAuthMethodRepo';
-import {getSessRepo} from '@canalapp/shared/db';
-import User from '../entities/User';
+import {getAuthMethodRepo, getSessRepo, getUserRepo} from '@canalapp/shared/dist/db';
+import {getSelf, DiscordUser} from '@canalapp/shared/dist/util/discord';
 
 const APP_BASE_URL = process.env.NODE_ENV === 'dev' ? 'http://localhost:8081' : 'https://canal.pointless.me';
 const DISCORD_TOKEN_ENDPOINT = 'https://discordapp.com/api/v6/oauth2/token';
-const DISCORD_SELF_ENDPOINT = 'https://discordapp.com/api/v6/users/@me';
 const DISCORD_CLIENT_ID = process.env.DISCORD_CLIENT_ID;
 const DISCORD_CLIENT_SECRET = process.env.DISCORD_CLIENT_SECRET;
 
@@ -23,17 +20,7 @@ interface DiscordOAuthTokenResponse {
   expires_in: number; // Seconds
   refresh_token: string;
 }
-interface DiscordUserResponse {
-  username: string;
-  verified: boolean;
-  locale: string;
-  mfa_enabled: boolean;
-  flags: number;
-  avatar: string; // TODO Can this be null?
-  discriminator: string;
-  id: string;
-  email: string;
-}
+
 interface ServerError {
   error: {
     message: string;
@@ -85,12 +72,7 @@ router.get('/discord/callback', async (req: express.Request, res: express.Respon
     } as ServerError);
     return;
   }
-  const userResp = await fetch(DISCORD_SELF_ENDPOINT, {
-    headers: {
-      Authorization: 'Bearer ' + tokenData.access_token
-    }
-  });
-  const discordUser = await userResp.json() as DiscordUserResponse;
+  const discordUser = await getSelf(tokenData.access_token);
   // Check if user exists
   const userRepo = getUserRepo();
   const authMethodRepo = getAuthMethodRepo();

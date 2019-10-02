@@ -4,7 +4,7 @@
 * */
 import 'reflect-metadata';
 import {GatewayServer, startGatewayServer} from './server';
-import {createDbConnection} from '../lib/database';
+import {createDbConnection} from '@canalapp/shared/dist/db';
 
 const DB_HOST = process.env.DB_HOST || 'localhost';
 const DB_USERNAME = process.env.DB_USERNAME || 'postgres';
