@@ -5,6 +5,7 @@
 import 'reflect-metadata';
 import {GatewayServer, startGatewayServer} from './server';
 import {createDbConnection} from '@canalapp/shared/dist/db';
+import {pubsub} from '@canalapp/shared';
 
 const DB_HOST = process.env.DB_HOST || 'localhost';
 const DB_USERNAME = process.env.DB_USERNAME || 'postgres';
@@ -25,6 +26,7 @@ if (!process.send || module.parent) {
 }
 
 async function main() {
+  pubsub.setup('canaldev');
   // This is a separate process. We need to instantiate the DB again
   const conn = await createDbConnection({
     host: DB_HOST,

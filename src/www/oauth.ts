@@ -1,16 +1,25 @@
-import * as express from 'express';
+import {randomBytes} from 'crypto';
+import {Router, Request, Response} from 'express';
 import fetch from 'node-fetch';
 import * as url from 'url';
 import {getAuthMethodRepo, getSessRepo, getUserRepo} from '@canalapp/shared/dist/db';
 import {getSelf, DiscordUser} from '@canalapp/shared/dist/util/discord';
 
-const APP_BASE_URL = process.env.NODE_ENV === 'dev' ? 'http://localhost:8081' : 'https://canal.pointless.me';
-const DISCORD_TOKEN_ENDPOINT = 'https://discordapp.com/api/v6/oauth2/token';
+const APP_URL = process.env.NODE_ENV === 'prod' ? 'https://canal.asherfoster.com' : 'http://localhost:8081';
+const API_URL = process.env.NODE_ENV === 'prod' ? 'https://api.canal.asherfoster.com' : 'http://localhost:4080';
+const DISCORD_OAUTH_URL = 'https://discordapp.com/api/v6/oauth2';
+
+const AUTH_SCOPES = ['identify', 'email'];
+const REDIRECT_URI = API_URL + '/oauth/discord/callback';
 const DISCORD_CLIENT_ID = process.env.DISCORD_CLIENT_ID;
 const DISCORD_CLIENT_SECRET = process.env.DISCORD_CLIENT_SECRET;
 
 if (!DISCORD_CLIENT_ID || !DISCORD_CLIENT_SECRET) {
   throw new TypeError('DISCORD_CLIENT_ID and DISCORD_CLIENT_SECRET are required environment variables for auth');
+}
+
+function generateState(): string {
+  return randomBytes(8).toString('hex');
 }
 
 interface DiscordOAuthTokenResponse {
@@ -29,19 +38,16 @@ interface ServerError {
   success: false;
 }
 
-const router = express.Router();
+const router = Router();
 
-function makeDiscordAvatarUrl(user: string, hash: string): string {
-  return `https://cdn.discordapp.com/avatars/${user}/${hash}.png`;
-}
-
-router.get('/discord/callback', async (req: express.Request, res: express.Response) => {
+router
+  .get('/discord/callback', async (req: Request, res: Response) => {
   const code = req.query.code;
   if (!code) {
-    res.redirect(`${APP_BASE_URL}/auth/complete?error=missing-code`);
+    res.redirect(`${APP_URL}/auth/callback?error=missing-code`);
   }
   if (!req.query.state) {
-    res.redirect(`${APP_BASE_URL}/auth/complete?error=invalid-state`);
+    res.redirect(`${APP_URL}/auth/callback?error=invalid-state`);
   }
   // TODO Verify state
 
@@ -54,7 +60,7 @@ router.get('/discord/callback', async (req: express.Request, res: express.Respon
     redirect_uri: req.secure ? 'https://' : 'http://' + req.headers.host + url.parse(req.originalUrl).pathname,
     scope: 'identify email'
   };
-  const tokenResp = await fetch(DISCORD_TOKEN_ENDPOINT, {
+  const tokenResp = await fetch(DISCORD_OAUTH_URL + '/token', {
     method: 'POST',
     body: new URLSearchParams(tokenRequest)
   });
@@ -73,7 +79,6 @@ router.get('/discord/callback', async (req: express.Request, res: express.Respon
     return;
   }
   const discordUser = await getSelf(tokenData.access_token);
-  // Check if user exists
   const userRepo = getUserRepo();
   const authMethodRepo = getAuthMethodRepo();
   const sessRepo = getSessRepo();
@@ -81,19 +86,20 @@ router.get('/discord/callback', async (req: express.Request, res: express.Respon
   // console.log(new User());
   // console.log(userRepo);
 
-  let user = await userRepo.getByToken(discordUser.id);
-  console.log('woop');
-  const newUser = !user;
+  // Check if user exists
+  const existingAuth = await authMethodRepo.findOne({providerId: discordUser.id});
+  const newUser = !existingAuth;
+  let user;
   // If it does, create a new session
   // If it doesn't, create a new user and assign a session
-  if (!user) {
+  if (newUser) {
+    console.log('User not found, creating new one!');
     user = await userRepo.createAndSave({
       name: discordUser.username,
       email: discordUser.email,
       avatarHash: discordUser.avatar,
       verified: discordUser.verified
     });
-    console.log('woohoo!');
     await authMethodRepo.createAndSave({
       user,
       provider: 'DISCORD',
@@ -102,8 +108,10 @@ router.get('/discord/callback', async (req: express.Request, res: express.Respon
       refreshToken: tokenData.refresh_token,
       accessToken: tokenData.access_token
     });
+  } else {
+    user = await userRepo.findOneOrFail({id: existingAuth.userId});
   }
-  console.log('ooooh');
+  console.log('Creating sess for', user.id);
   const sess = await sessRepo.createAndSave({
     user,
     authMethod: 'DISCORD',
@@ -111,9 +119,16 @@ router.get('/discord/callback', async (req: express.Request, res: express.Respon
     creatorUa: (req.headers['user-agent'] || 'unknown').substr(0, 256)
   });
 
-  const expiryTime = Math.floor((sess.expires.getTime() - Date.now()) / 1000);
-  let redirectUrl = `${APP_BASE_URL}/auth/complete?provider=DISCORD&sess=${sess.token}&expires=${expiryTime}`;
+  let redirectUrl = `${APP_URL}/auth/callback?provider=DISCORD&sess=${sess.token}&expires=${tokenExpiry.getTime()}`;
   if (newUser) redirectUrl += '&newuser=true';
+  console.log('Redirecting to', redirectUrl);
   res.redirect(redirectUrl);
-});
+})
+  .get('/discord/start', (req: Request, res: Response) => {
+    const state = generateState(); // TODO implement state!!
+    const scopes = encodeURIComponent(AUTH_SCOPES.join(' '));
+    res.redirect(DISCORD_OAUTH_URL + `/authorize?response_type=code&`
+      + `client_id=${DISCORD_CLIENT_ID}&scope=${scopes}&state=${state}`
+      + `&redirect_uri=${encodeURIComponent(REDIRECT_URI)}`);
+  });
 export default router;
