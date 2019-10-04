@@ -10,7 +10,7 @@ RUN npm install
 # Copy source
 COPY . .
 
-ENV NODE_ENV prod
+ENV NODE_ENV production
 
 RUN npm run build
 

@@ -3,14 +3,15 @@ import {Router, Request, Response} from 'express';
 import fetch from 'node-fetch';
 import * as url from 'url';
 import {getAuthMethodRepo, getSessRepo, getUserRepo} from '@canalapp/shared/dist/db';
-import {getSelf, DiscordUser} from '@canalapp/shared/dist/util/discord';
+import {getSelf} from '@canalapp/shared/dist/util/discord';
 
-const APP_URL = process.env.NODE_ENV === 'prod' ? 'https://canal.asherfoster.com' : 'http://localhost:8081';
-const API_URL = process.env.NODE_ENV === 'prod' ? 'https://api.canal.asherfoster.com' : 'http://localhost:4080';
+const APP_URL = process.env.NODE_ENV === 'production' ? 'https://canal.asherfoster.com/app' : 'http://localhost:8081';
+const API_URL = process.env.NODE_ENV === 'production' ? 'https://api.canal.asherfoster.com' : 'http://localhost:4080';
 const DISCORD_OAUTH_URL = 'https://discordapp.com/api/v6/oauth2';
 
 const AUTH_SCOPES = ['identify', 'email'];
 const REDIRECT_URI = API_URL + '/oauth/discord/callback';
+const APP_AUTH_CALLBACK = APP_URL + '/auth/callback';
 const DISCORD_CLIENT_ID = process.env.DISCORD_CLIENT_ID;
 const DISCORD_CLIENT_SECRET = process.env.DISCORD_CLIENT_SECRET;
 
@@ -44,10 +45,10 @@ router
   .get('/discord/callback', async (req: Request, res: Response) => {
   const code = req.query.code;
   if (!code) {
-    res.redirect(`${APP_URL}/auth/callback?error=missing-code`);
+    res.redirect(`${APP_AUTH_CALLBACK}?error=missing-code`);
   }
   if (!req.query.state) {
-    res.redirect(`${APP_URL}/auth/callback?error=invalid-state`);
+    res.redirect(`${APP_AUTH_CALLBACK}?error=invalid-state`);
   }
   // TODO Verify state
 
@@ -119,7 +120,7 @@ router
     creatorUa: (req.headers['user-agent'] || 'unknown').substr(0, 256)
   });
 
-  let redirectUrl = `${APP_URL}/auth/callback?provider=DISCORD&sess=${sess.token}&expires=${tokenExpiry.getTime()}`;
+  let redirectUrl = `${APP_AUTH_CALLBACK}?provider=DISCORD&sess=${sess.token}&expires=${tokenExpiry.getTime()}`;
   if (newUser) redirectUrl += '&newuser=true';
   console.log('Redirecting to', redirectUrl);
   res.redirect(redirectUrl);
