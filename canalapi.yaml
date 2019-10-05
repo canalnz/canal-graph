@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
         - name: canal-api
-          image: gcr.io/canalapp/canal-api:0.1
+          image: gcr.io/canalapp/canal-api:0.3
           imagePullPolicy: Always
           ports:
             - name: http-api
@@ -29,3 +29,7 @@ spec:
           envFrom:
             - secretRef:
                 name: canal-api-prod-creds
+          readinessProbe:
+            httpGet:
+              port: 4080
+              path: /system/health

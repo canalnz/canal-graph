@@ -10,16 +10,15 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/asherfoster/canal-api.git"
+    "url": "git+https://github.com/asherfoster/canal-graph.git"
   },
   "author": "Asher Foster <me@asherfoster.com>",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/asherfoster/canal-api/issues"
+    "url": "https://github.com/asherfoster/canal-graph/issues"
   },
-  "homepage": "https://github.com/asherfoster/canal-api#readme",
+  "homepage": "https://github.com/asherfoster/canal-graph#readme",
   "devDependencies": {
-    "@canalapp/shared": "github:asherfoster/canal-shared",
     "@types/graphql": "^14.2.2",
     "@types/jest": "^24.0.18",
     "@types/node": "^12.7.8",
@@ -30,6 +29,7 @@
     "typescript": "^3.6.3"
   },
   "dependencies": {
+    "@canalapp/shared": "npm:@asherfoster/canal-shared@^1.0.1",
     "@google-cloud/pubsub": "^1.1.0",
     "apollo-server": "^2.9.4",
     "apollo-server-express": "^2.9.4",

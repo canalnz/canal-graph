@@ -57,8 +57,7 @@ router
     client_secret: DISCORD_CLIENT_SECRET,
     grant_type: 'authorization_code',
     code,
-    // God I hate this line. Should probably change it?
-    redirect_uri: req.secure ? 'https://' : 'http://' + req.headers.host + url.parse(req.originalUrl).pathname,
+    redirect_uri: REDIRECT_URI,
     scope: 'identify email'
   };
   const tokenResp = await fetch(DISCORD_OAUTH_URL + '/token', {
@@ -70,6 +69,7 @@ router
 
   // TODO Improve error responses
   if (!tokenData.access_token) {
+    if (req.query.debug) console.log(code, tokenData);
     res.status(400).json({
       error: {
         message: 'The access code you provided didn\'t work :(',

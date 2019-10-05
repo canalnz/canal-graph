@@ -2,7 +2,8 @@ import * as express from 'express';
 import oauthRouter from './oauth';
 
 const app = express();
-app.get('/status', (req, res) => {
+app.get('/system/health', (req, res) => {
+  // The server listening is the last step. We can just make it always serve this.
   res.json({status: 'ok', message: 'nothing is visibly on fire!'});
 });
 app.use('/oauth', oauthRouter);
