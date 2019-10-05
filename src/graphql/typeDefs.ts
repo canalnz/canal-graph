@@ -46,6 +46,7 @@ const typeDefs = gql`
         name: String
         avatarUrl: String
         discordId: String
+        admin: Boolean
     }
     type ClientUser {
         """
@@ -57,6 +58,7 @@ const typeDefs = gql`
         email: String!
         created: Date!
         discordId: String
+        admin: Boolean!
     }
     input UserUpdateInput {
         id: String
@@ -188,6 +190,7 @@ const typeDefs = gql`
         script(id: String!): Script
 
         user: ClientUser!
+        users: [User!]
     }
 
     type Mutation {
@@ -216,6 +219,11 @@ const typeDefs = gql`
         updateUser(user: UserUpdateInput): User!
         destroySession: String!
         destroyAllSessions(user: String): String!
+        deleteUser(user: String): String!
+        setUserFlag(user: String!, name: String!, value: String): String
+
+
+        createInviteKey(lifespan: Int): String
     }
 `;
 
