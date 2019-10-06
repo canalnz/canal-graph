@@ -26,6 +26,11 @@ spec:
           env:
             - name: DB_HOST
               value: 10.97.176.3
+            - name: INVITE_KEY
+              valueFrom:
+                secretKeyRef:
+                  key: INVITE_KEY
+                  name: canal-prod-invite-key-env
           envFrom:
             - secretRef:
                 name: canal-api-prod-creds

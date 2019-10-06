@@ -1,7 +1,6 @@
 import 'reflect-metadata';
 import app from './www';
 import setupGraphServer from './graphql';
-import {gateway} from './gateway/connector';
 import {createDbConnection} from '@canalapp/shared/dist/db';
 import {pubsub} from '@canalapp/shared';
 
@@ -25,11 +24,8 @@ async function main() {
     port: DB_PORT
   });
 
-  // Setup Gateway
-  await gateway.setup();
-
   // Setup Graph
-  const graphServer = setupGraphServer(gateway);
+  const graphServer = setupGraphServer();
   graphServer.applyMiddleware({app});
 
   // Setup Webserver

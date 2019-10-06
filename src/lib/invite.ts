@@ -1,7 +1,7 @@
 import {snowflake} from '@canalapp/shared';
 import * as jwt from 'jsonwebtoken';
 
-let key = process.env.INVITE_KEY; // TODO use k8s secret
+let key = process.env.INVITE_KEY;
 if (!key && process.env.NODE_ENV === 'production') throw new Error('Failed to load invite signing key!');
 if (!key) {
   console.error('Warning: defaulting signing key!');
@@ -29,3 +29,4 @@ export async function verifyInviteKey(token: string): Promise<boolean> {
     return false;
   }
 }
+

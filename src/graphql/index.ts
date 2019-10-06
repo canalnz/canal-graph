@@ -2,9 +2,8 @@ import {ApolloServer, AuthenticationError} from 'apollo-server-express';
 import typeDefs, {GraphContext} from './typeDefs';
 import resolvers from './resolvers';
 import {authenticateHttpRequest} from '../lib/auth';
-import {GatewayConnector} from '../gateway/connector';
 
-export default function setupGraphServer(gateway: GatewayConnector) {
+export default function setupGraphServer() {
   return new ApolloServer({
     typeDefs,
     resolvers,
@@ -13,7 +12,6 @@ export default function setupGraphServer(gateway: GatewayConnector) {
       if (!authInfo) throw new AuthenticationError('You must be logged in to view this API');
       if (!authInfo.user) throw new AuthenticationError('Invalid Authorization');
       return {
-        gateway,
         user: authInfo.user,
         token: authInfo.token
       };

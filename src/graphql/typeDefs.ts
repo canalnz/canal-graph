@@ -1,5 +1,4 @@
 import {gql} from 'apollo-server';
-import {GatewayConnector} from '../gateway/connector';
 import {User} from '@canalapp/shared/dist/db';
 
 export interface Paginated<T> {
@@ -7,7 +6,6 @@ export interface Paginated<T> {
   totalCount: number;
 }
 export interface GraphContext {
-    gateway: GatewayConnector;
     token: string;
     user: User;
 }
