@@ -15,7 +15,7 @@ const HTTP_PORT = process.env.HTTP_PORT || 4080;
 
 async function main() {
   // Setup pubsub
-  pubsub.setup('canaldev');
+  pubsub.setup();
   // Setup DB
   const conn = createDbConnection({
     host: DB_HOST,
