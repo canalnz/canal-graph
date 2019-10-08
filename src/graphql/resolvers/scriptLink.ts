@@ -42,7 +42,7 @@ const scriptLinkResolvers = {
       const link = await linkRepo.findOne({scriptId: args.script, botId: args.bot});
       if (!link) throw new Error('Link not found');
 
-      linkRepo.restart(link);
+      await linkRepo.restart(link);
       return link;
     }
   },
