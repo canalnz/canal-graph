@@ -8,4 +8,4 @@ build:
 deploy:
   kubectl:
     manifests:
-    - canalapi.yaml
+    - canal-graph.yaml
