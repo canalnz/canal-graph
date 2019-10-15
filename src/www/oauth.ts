@@ -4,10 +4,10 @@ import fetch from 'node-fetch';
 import * as cookieParser from 'cookie-parser';
 import {getAuthMethodRepo, getSessRepo, getUserRepo} from '@canalapp/shared/dist/db';
 import {getSelf} from '@canalapp/shared/dist/util/discord';
-import {verifyInviteKey} from "../lib/invite";
+import {verifyInviteKey} from '../lib/invite';
 
-const APP_URL = process.env.NODE_ENV === 'production' ? 'https://canal.asherfoster.com/app' : 'http://localhost:8081';
-const API_URL = process.env.NODE_ENV === 'production' ? 'https://api.canal.asherfoster.com' : 'http://localhost:4080';
+const APP_URL = process.env.NODE_ENV === 'production' ? 'https://canal.nz/app' : 'http://localhost:8081';
+const API_URL = process.env.NODE_ENV === 'production' ? 'https://api.canal.nz' : 'http://localhost:4080';
 const DISCORD_OAUTH_URL = 'https://discordapp.com/api/v6/oauth2';
 
 const AUTH_SCOPES = ['identify', 'email'];
@@ -136,7 +136,7 @@ router
     res.cookie('state', state);
 
     res.redirect(DISCORD_OAUTH_URL + `/authorize?response_type=code&prompt=none`
-      + `client_id=${DISCORD_CLIENT_ID}&scope=${scopes}&state=${state}`
+      + `&client_id=${DISCORD_CLIENT_ID}&scope=${scopes}&state=${state}`
       + `&redirect_uri=${encodeURIComponent(REDIRECT_URI)}`);
   });
 export default router;
