@@ -135,7 +135,7 @@ router
     if (req.query.key) res.cookie('invitekey', req.query.key);
     res.cookie('state', state);
 
-    res.redirect(DISCORD_OAUTH_URL + `/authorize?response_type=code&`
+    res.redirect(DISCORD_OAUTH_URL + `/authorize?response_type=code&prompt=none`
       + `client_id=${DISCORD_CLIENT_ID}&scope=${scopes}&state=${state}`
       + `&redirect_uri=${encodeURIComponent(REDIRECT_URI)}`);
   });
