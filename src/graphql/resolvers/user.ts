@@ -38,16 +38,16 @@ const resolvers = {
       await getUserRepo().delete({id: user});
       return user;
     },
-    async setUserFlag(parent: void, args: {user: string, name: string, value?: string}, context: GraphContext): Promise<string | null> {
+    async setUserFlag(parent: void, args: {user: string, name: string, value?: boolean}, context: GraphContext): Promise<boolean> {
       const flagRepo = getUserFlagRepo();
       if (!await flagRepo.isUserAdmin(context.user)) throw new Error('You aren\'t permitted to use this mutation');
       if (args.value) {
         const existing = await getUserFlagRepo().findOne({userId: args.user, name: args.name});
         if (existing) {
-          existing.value = args.value;
+          existing.value = 'true';
           await flagRepo.save(existing);
         } else {
-          await flagRepo.createAndSave(args);
+          await flagRepo.createAndSave({...args, value: 'true'});
         }
       } else {
         await getUserFlagRepo().delete({userId: args.user, name: args.name});

@@ -218,7 +218,7 @@ const typeDefs = gql`
         destroySession: String!
         destroyAllSessions(user: String): String!
         deleteUser(user: String): String!
-        setUserFlag(user: String!, name: String!, value: String): String
+        setUserFlag(user: String!, name: String!, value: Boolean): Boolean
 
 
         createInviteKey(lifespan: Int): String

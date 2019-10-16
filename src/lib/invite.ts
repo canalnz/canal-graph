@@ -29,4 +29,3 @@ export async function verifyInviteKey(token: string): Promise<boolean> {
     return false;
   }
 }
-
