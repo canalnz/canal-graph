@@ -44,6 +44,19 @@ const scriptLinkResolvers = {
 
       await linkRepo.restart(link);
       return link;
+    },
+    async restartScriptEverywhere(parent: void, args: {script: string}, context: GraphContext): Promise<ScriptLink[]> {
+      const linkRepo = getScriptLinkRepo();
+      const links = await linkRepo.find({scriptId: args.script});
+
+      const script = await getScriptRepo().findOneIfUserCanRead(args.script, context.user);
+      if (!script) throw new Error('Script not found!');
+
+      await Promise.all(links.map(async (link) => {
+        await linkRepo.restart(link);
+      }));
+
+      return links;
     }
   },
   ScriptLink: {
