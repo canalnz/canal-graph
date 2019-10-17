@@ -26,7 +26,12 @@ async function main() {
 
   // Setup Graph
   const graphServer = setupGraphServer();
-  graphServer.applyMiddleware({app});
+  graphServer.applyMiddleware({
+    app,
+    cors: {
+      origin: ['https://canal.nz', /https:\/\/.+\.canal.nz/]
+    }
+  });
 
   // Setup Webserver
   app.listen({port: HTTP_PORT}, () => {
