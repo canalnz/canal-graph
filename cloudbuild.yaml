@@ -3,7 +3,7 @@ steps:
     args:
       - kms
       - decrypt
-      - --ciphertext-file=.npmrc.env
+      - --ciphertext-file=.npmrc.enc
       - --plaintext-file=.npmrc
       - --location=global
       - --keyring=canal-build
