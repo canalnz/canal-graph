@@ -1,2 +1,2 @@
 rm .npmrc
-mv .mpmrc.ci .npmrc
+mv .npmrc.ci .npmrc
