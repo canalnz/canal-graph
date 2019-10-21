@@ -12,11 +12,11 @@ const defaultLifespan = 24 * 60 * 60 * 1000; // A day? It'll do
 export type InvitePayload = [string, number];
 
 // Create
-export async function createInviteKey(lifespan: number = defaultLifespan): Promise<string> {
+export async function createInviteKey(expiry?: number): Promise<string> {
   const id = await snowflake.nextSnowflake();
-  const expiryTime = Date.now() + lifespan;
+  expiry = expiry || Date.now() + defaultLifespan;
 
-  return jwt.sign(JSON.stringify([id, expiryTime]), key);
+  return jwt.sign(JSON.stringify([id, expiry]), key);
 }
 // Verify
 export async function verifyInviteKey(token: string): Promise<boolean> {

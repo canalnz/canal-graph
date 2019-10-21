@@ -7,7 +7,7 @@ WORKDIR /usr/src/app
 # Seperate command for cp package.json so that it doesn't reinstall every source change
 # Copies creds for install, then removes them
 COPY package*.json ./
-COPY .npmrc.ci ./.npmrc
+COPY .npmrc.secret ./.npmrc
 RUN npm install
 RUN rm -f .npmrc
 
