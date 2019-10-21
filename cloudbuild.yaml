@@ -1,20 +1,17 @@
 steps:
-  - name: gcr.io/cloud-builders/gcloud
-    args:
-      - kms
-      - decrypt
-      - --ciphertext-file=.npmrc.enc
-      - --plaintext-file=.npmrc
-      - --location=global
-      - --keyring=canal-build
-      - --key=prod-secrets
+  # We need to install locally in order to test the app
+  - name: 'ubuntu'
+    args: ['bash', './configureci.sh']
   - name: 'gcr.io/cloud-builders/npm'
     args: ['install']
   - name: 'gcr.io/cloud-builders/npm'
     args: ['test']
-  - name: 'gcr.io/cloud-builders/npm'
-    args: ['build']
   - name: 'gcr.io/cloud-builders/docker'
-    args: [ 'build', '-t', 'gcr.io/$PROJECT_ID/canal-graph', '.' ]
+    args: [ 'build', '--build-arg', 'NPM_TOKEN=${NPM_TOKEN}', '-t', 'gcr.io/$PROJECT_ID/canal-graph', '.' ]
 images:
   - 'gcr.io/$PROJECT_ID/canal-graph'
+
+secrets:
+  - kmsKeyName: projects/canalapp/locations/global/keyRings/canal-build/cryptoKeys/prod-secrets
+    secretEnv:
+      NPM_TOKEN: CiQAbBfdXmnGDJmp8wjlcmk9XZu3desUvSUHAlP+PCfgRd4gz7ESUgCZosN6sYyK1oXjz2TLpAVLvQD7kBOqhsDpFSJoxMJ52UuW6NmEYVMx8ReErQE0pYqrc7IOa9RZWXMKgTFaVhy31Mqp9zi1pS4GvI/IZkrsGE8=
