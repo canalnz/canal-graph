@@ -1,7 +1,8 @@
 steps:
   # We need to install locally in order to test the app
   - name: 'ubuntu'
-    args: ['bash', './configureci.sh']
+    entrypoint: 'bash'
+    args: ['-c', 'cp .npmrc.ci .npmrc']
   # Uses node rather than cloudbuilder for a newer version of npm
   - name: 'node:10'
     entrypoint: npm
