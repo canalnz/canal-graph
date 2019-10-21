@@ -57,7 +57,7 @@ const resolvers = {
     async createInviteKey(parent: void, args: {lifespan?: number}, context: GraphContext): Promise<string> {
       if (!await getUserFlagRepo().isUserAdmin(context.user)) throw new Error('You aren\'t permitted to use this mutation');
 
-      return await createInviteKey(args.lifespan);
+      return await createInviteKey(Date.now() + args.lifespan);
     }
   },
   User: {
