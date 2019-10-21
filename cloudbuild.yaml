@@ -2,10 +2,13 @@ steps:
   # We need to install locally in order to test the app
   - name: 'ubuntu'
     args: ['bash', './configureci.sh']
-  - name: 'gcr.io/cloud-builders/npm'
+  # Uses node rather than cloudbuilder for a newer version of npm
+  - name: 'node:10'
+    entrypoint: npm
     args: ['install']
     secretEnv: ['NPM_TOKEN']
-  - name: 'gcr.io/cloud-builders/npm'
+  - name: 'node:10'
+    entrypoint: npm
     args: ['test']
   - name: 'gcr.io/cloud-builders/docker'
     entrypoint: 'bash'
