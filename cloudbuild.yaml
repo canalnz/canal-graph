@@ -4,10 +4,12 @@ steps:
     args: ['bash', './configureci.sh']
   - name: 'gcr.io/cloud-builders/npm'
     args: ['install']
+    secretEnv: ['NPM_TOKEN']
   - name: 'gcr.io/cloud-builders/npm'
     args: ['test']
   - name: 'gcr.io/cloud-builders/docker'
     args: [ 'build', '--build-arg', 'NPM_TOKEN=${NPM_TOKEN}', '-t', 'gcr.io/$PROJECT_ID/canal-graph', '.' ]
+    secretEnv: ['NPM_TOKEN']
 images:
   - 'gcr.io/$PROJECT_ID/canal-graph'
 
