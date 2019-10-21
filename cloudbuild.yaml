@@ -10,6 +10,7 @@ steps:
   - name: 'node:10'
     entrypoint: npm
     args: ['test']
+    secretEnv: ['NPM_TOKEN'] # NPM doesn't like having an incomplete .npmrc, so this needs to be there even if not used
   - name: 'gcr.io/cloud-builders/docker'
     entrypoint: 'bash'
     args: ['-c', 'docker build --build-arg NPM_TOKEN=$$NPM_TOKEN -t gcr.io/$PROJECT_ID/canal-graph .']
