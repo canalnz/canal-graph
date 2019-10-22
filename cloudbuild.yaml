@@ -17,7 +17,7 @@ steps:
     args: ['-c', 'docker build --build-arg NPM_TOKEN=$$NPM_TOKEN -t gcr.io/$PROJECT_ID/canal-graph .']
     secretEnv: ['NPM_TOKEN']
   - name: 'gcr.io/cloud-builders/docker'
-    args: ['tag', 'gcr.io/$PROJECT_ID/canal-graph', 'gcr.io/canalapp/$PROJECT_ID/canal-graph:$SHORT_SHA']
+    args: ['tag', 'gcr.io/$PROJECT_ID/canal-graph', 'gcr.io/$PROJECT_ID/canal-graph:$SHORT_SHA']
 images:
   - 'gcr.io/$PROJECT_ID/canal-graph'
   - 'gcr.io/$PROJECT_ID/canal-graph:$SHORT_SHA'
