@@ -2,12 +2,12 @@ import {GraphContext, Paginated} from '../typeDefs';
 import {buildAvatarUrl} from '@canalapp/shared/dist/util/discord';
 import {
   Bot,
-  BotPermission, BotPermissionQualifierType,
+  BotPermission, BotPermissionQualifierType, BotState,
   getBotPermRepo,
-  getBotRepo,
-  getScriptLinkRepo,
+  getBotRepo, getBotStateRepo,
+  getScriptLinkRepo, getScriptStateRepo,
   getUserRepo,
-  Platform, ScriptLink,
+  Platform, ScriptLink, ScriptStateName,
   User
 } from '@canalapp/shared/dist/db';
 
@@ -115,9 +115,9 @@ const botResolvers = {
       // Just being lazy and using the resource owner as creator
       return await getUserRepo().findOne({id: parent.resourceOwnerId}) || null;
     },
-    connection(parent: Bot) {
-      // Ooooh this is where things get fun
-      // TODO get fun
+    async connection(parent: Bot): Promise<BotState | null> {
+      const state = await getBotStateRepo().findOne({botId: parent.id});
+      return state || null;
     },
     async scripts(parent: Bot, args: void, context: GraphContext): Promise<Paginated<ScriptLink>> {
       // We can go ahead and load these scripts, because only trusted people can load the root bot
@@ -136,6 +136,12 @@ const botResolvers = {
     }
     // options can default?
   },
+  BotConnection: {
+    // state can default
+    created(parent: BotState): Date {
+      return parent.updated;
+    }
+  }
   // BotPermission can all default
   // BotPermissionQualifier can default too
 };

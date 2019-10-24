@@ -21,18 +21,20 @@ const typeDefs = gql`
         """
         The State of a bot at the end of a Connection
         """
+        OFFLINE
+        FAILED
         STARTUP
-        OK
+        ONLINE
         ERROR
     }
     enum ScriptState {
         """
         What a Script is up to
         """
+        STOPPED
         RUNNING
         PASSIVE
-        ERRORED
-        STOPPED
+        ERROR
     }
     scalar Date # ISO String
 

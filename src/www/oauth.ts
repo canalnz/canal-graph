@@ -72,7 +72,6 @@ router
 
     // TODO Improve error responses
     if (!tokenData.access_token) {
-      if (req.query.debug) console.log(code, tokenData);
       res.status(400).json({
         error: {
           message: 'The access code you provided didn\'t work :(',
