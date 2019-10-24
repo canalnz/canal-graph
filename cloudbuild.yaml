@@ -1,17 +1,13 @@
 steps:
   # We need to install locally in order to test the app
-  - name: 'ubuntu'
-    entrypoint: 'bash'
-    args: ['-c', 'cp .npmrc.ci .npmrc']
   # Uses node rather than cloudbuilder for a newer version of npm
   - name: 'node:10'
-    entrypoint: npm
-    args: ['install']
+    entrypoint: 'bash'
+    args: ['-c', './ci-install.sh']
     secretEnv: ['NPM_TOKEN']
   - name: 'node:10'
     entrypoint: npm
     args: ['test']
-    secretEnv: ['NPM_TOKEN'] # NPM doesn't like having an incomplete .npmrc, so this needs to be there even if not used
   - name: 'gcr.io/cloud-builders/docker'
     entrypoint: 'bash'
     args: ['-c', 'docker build --build-arg NPM_TOKEN=$$NPM_TOKEN -t gcr.io/$PROJECT_ID/canal-graph .']
