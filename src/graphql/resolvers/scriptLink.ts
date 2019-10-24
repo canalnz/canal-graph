@@ -1,6 +1,8 @@
 import {GraphContext} from '../typeDefs';
-import {ScriptLink, Script, ScriptState, Bot, User,
-  getScriptLinkRepo, getBotRepo, getScriptRepo, getUserRepo} from '@canalapp/shared/dist/db';
+import {
+  ScriptLink, Script, ScriptState, Bot, User,
+  getScriptLinkRepo, getBotRepo, getScriptRepo, getUserRepo, ScriptStateName, getScriptStateRepo
+} from '@canalapp/shared/dist/db';
 
 export interface LinkId {
   script: string;
@@ -70,9 +72,14 @@ const scriptLinkResolvers = {
       if (!bot) throw new Error('Internal error');
       return bot;
     },
-    // lastStarted can default
-    async state(parent: ScriptLink): Promise<ScriptState> {
-      return 'ERRORED';
+    async lastStarted(parent: ScriptLink): Promise<Date | null> {
+      const state = await getScriptStateRepo().findOne({botId: parent.botId, scriptId: parent.scriptId});
+      if (!state) return null;
+      else return state.updated;
+    },
+    async state(parent: ScriptLink): Promise<ScriptStateName | null> {
+      const state = await getScriptStateRepo().findOne({scriptId: parent.scriptId, botId: parent.botId});
+      return state ? state.state : null;
     },
     // created can default
     async createdBy(parent: ScriptLink): Promise<User | null> {

@@ -9,9 +9,13 @@ const DB_USERNAME = process.env.DB_USERNAME || 'postgres';
 const DB_PASSWORD = process.env.DB_PASSWORD as string; // This cast isn't safe, but typescript isn't noticing the guard?
 const DB_PORT = +(process.env.DB_PORT || 5432);
 
-if (!DB_PASSWORD) throw new Error('DB_PASSWORD environment variable is required!');
+const CORS_ORIGINS = ['https://canal.nz', /https:\/\/.+\.canal.nz/];
 
-const HTTP_PORT = process.env.HTTP_PORT || 4080;
+if (!DB_PASSWORD) throw new Error('DB_PASSWORD environment variable is required!');
+// Add localhost if not prod, https optional, any or no port
+if (process.env.NODE_ENV !== 'production') CORS_ORIGINS.push(/https?:\/\/localhost:?[0-9]*$/);
+
+const HTTP_PORT = process.env.HTTP_PORT || process.env.PORT || 4080;
 
 async function main() {
   // Setup pubsub
@@ -29,7 +33,7 @@ async function main() {
   graphServer.applyMiddleware({
     app,
     cors: {
-      origin: ['https://canal.nz', /https:\/\/.+\.canal.nz/]
+      origin: CORS_ORIGINS
     }
   });
 
