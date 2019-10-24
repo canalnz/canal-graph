@@ -3,7 +3,7 @@ steps:
   # Uses node rather than cloudbuilder for a newer version of npm
   - name: 'node:10'
     entrypoint: 'bash'
-    args: ['-c', './ci-install.sh']
+    args: ['ci-install.sh']
     secretEnv: ['NPM_TOKEN']
   - name: 'node:10'
     entrypoint: npm
