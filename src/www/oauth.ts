@@ -32,25 +32,17 @@ interface DiscordOAuthTokenResponse {
   refresh_token: string;
 }
 
-interface ServerError {
-  error: {
-    message: string;
-    code: string;
-  };
-  success: false;
-}
-
 const router = Router();
 
 router
   .get('/discord/callback', cookieParser(), async (req: Request, res: Response) => {
     const code = req.query.code;
     if (!code) {
-      res.redirect(`${APP_AUTH_CALLBACK}?error=missing-code`);
+      return res.redirect(`${APP_AUTH_CALLBACK}?error=missing-code`);
     }
     // No, I don't know how to properly implement state
     if (!req.query.state || !req.cookies.state || req.cookies.state !== req.query.state) {
-      res.redirect(`${APP_AUTH_CALLBACK}?error=invalid-state`);
+      return res.redirect(`${APP_AUTH_CALLBACK}?error=invalid-state`);
     }
     // Store key if needed to sign up
     const key = req.cookies.invitekey;
@@ -72,14 +64,7 @@ router
 
     // TODO Improve error responses
     if (!tokenData.access_token) {
-      res.status(400).json({
-        error: {
-          message: 'The access code you provided didn\'t work :(',
-          code: 'invalid-params'
-        },
-        success: false
-      } as ServerError);
-      return;
+      return res.redirect(`${APP_AUTH_CALLBACK}?error=token-invalid`);
     }
     const discordUser = await getSelf(tokenData.access_token);
     const userRepo = getUserRepo();

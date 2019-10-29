@@ -57,21 +57,21 @@ const botResolvers = {
       });
     },
     // Currently this is only used for changing the platform
-    async updateBot(parent: void, {bot: {id, platform}}: {bot: BotUpdateInput}, context: GraphContext): Promise<Bot> {
+    async updateBot(parent: void, {bot: updateData}: {bot: BotUpdateInput}, context: GraphContext): Promise<Bot> {
       const botRepo = getBotRepo();
-      const bot = await botRepo.findOneIfUserCanRead(id, context.user);
+      const bot = await botRepo.findOneIfUserCanRead(updateData.id, context.user);
       if (!bot) throw new Error('Couldn\'t find that bot :(');
-      if (!platform) return bot; // idk why this would happen but 🤷‍
+      if (!updateData.platform) return bot; // idk why this would happen but 🤷‍
 
-      bot.platform = platform;
+      bot.platform = updateData.platform;
       return await botRepo.save(bot);
     },
-    async deleteBot(parent: void, args: {id: string}, context: GraphContext): Promise<string> {
+    async deleteBot(parent: void, args: {bot: string}, context: GraphContext): Promise<string> {
       const botRepo = getBotRepo();
-      const bot = await botRepo.findOneIfUserCanRead(args.id, context.user);
+      const bot = await botRepo.findOneIfUserCanRead(args.bot, context.user);
       if (!bot) throw new Error('Couldn\'t find that bot :(');
       await botRepo.remove(bot);
-      return args.id;
+      return args.bot;
     },
 
     async createBotPermission(parent: void, args: {perm: BotPermissionCreateInput}, context: GraphContext): Promise<BotPermission> {
