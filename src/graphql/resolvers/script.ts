@@ -1,7 +1,6 @@
 import {GraphContext, Paginated} from '../typeDefs';
 import {getScriptRepo, getUserRepo, Platform, Script, User} from '@canalapp/shared/dist/db';
-
-const newScriptName = 'untitled-script';
+import * as namor from 'namor';
 
 interface ScriptCreateInput {
   name: string;
@@ -13,6 +12,15 @@ interface ScriptUpdateInput {
   name?: string;
   body?: string;
   platform?: Platform;
+}
+
+async function generateUniqueScriptNameForUser(user: User): Promise<string> {
+  let tries = 0;
+  while (tries++ < 10) {
+    const name = namor.generate({words: 2, numbers: 0});
+    if (!(await getScriptRepo().findOne({resourceOwnerId: user.id, name}))) return name;
+  }
+  return Math.random().toString(36).substr(2); // Give up on a pretty ID, just make something boring
 }
 
 const scriptResolvers = {
@@ -29,22 +37,15 @@ const scriptResolvers = {
     }
   },
   Mutation: {
+    // They don't really have to be unique, but we should enforce uniqueness anyway
+    // TODO enforce unique names
     async createScript(parent: void, args: {script?: ScriptCreateInput}, context: GraphContext): Promise<Script> {
-      // Find next available untitled-script-* slot
       const scriptRepo = getScriptRepo();
       if (!args.script) {
-        const matchingScripts = await scriptRepo.createQueryBuilder('script')
-          .where('script.name LIKE :name', {name: newScriptName + '%'})
-          .getMany();
-        let nextName = newScriptName;
-        if (matchingScripts.length) {
-          // Find the maximum number
-          // Convert names to the number contained at the end
-          const nums = matchingScripts.map((s) => parseInt(s.name.substr(newScriptName.length + 1), 10) || 0);
-          nextName += '-' + (Math.max(...nums) + 1);
-        }
+        const name = generateUniqueScriptNameForUser(context.user);
+
         return await scriptRepo.createAndSave({
-          name: nextName,
+          name,
           body: '',
           platform: 'NODEJS',
           owner: context.user

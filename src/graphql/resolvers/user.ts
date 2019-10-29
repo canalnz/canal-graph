@@ -1,4 +1,5 @@
 import {GraphContext} from '../typeDefs';
+import {ForbiddenError} from 'apollo-server-express';
 import {buildAvatarUrl} from '@canalapp/shared/dist/util/discord';
 import {getAuthMethodRepo, getSessRepo, getUserFlagRepo, getUserRepo, User} from '@canalapp/shared/dist/db';
 import {createInviteKey} from '../../lib/invite';
@@ -55,8 +56,7 @@ const resolvers = {
       return args.value;
     },
     async createInviteKey(parent: void, args: {lifespan?: number}, context: GraphContext): Promise<string> {
-      if (!await getUserFlagRepo().isUserAdmin(context.user)) throw new Error('You aren\'t permitted to use this mutation');
-
+      if (!await getUserFlagRepo().isUserAdmin(context.user)) throw new ForbiddenError('Forbidden');
       return await createInviteKey(Date.now() + args.lifespan);
     }
   },
@@ -65,16 +65,14 @@ const resolvers = {
       return await getUserFlagRepo().isUserAdmin(parent.id);
     },
     async avatarUrl(parent: User): Promise<string> {
-      // TODO fix this fucking disaster
       const discordAuth = await getAuthMethodRepo().findOneOrFail({userId: parent.id, provider: 'DISCORD'});
-      return buildAvatarUrl(discordAuth.providerId as string, parent.avatarHash as string);
+      return buildAvatarUrl(discordAuth.providerId, parent.avatarHash);
     },
   },
   ClientUser: {
     async avatarUrl(parent: User): Promise<string> {
-      // TODO fix this fucking disaster
       const discordAuth = await getAuthMethodRepo().findOneOrFail({userId: parent.id, provider: 'DISCORD'});
-      return buildAvatarUrl(discordAuth.providerId as string, parent.avatarHash as string);
+      return buildAvatarUrl(discordAuth.providerId, parent.avatarHash);
     },
     async admin(parent: User, args: void, context: GraphContext): Promise<boolean> {
       return await getUserFlagRepo().isUserAdmin(context.user);
