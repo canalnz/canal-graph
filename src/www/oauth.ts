@@ -6,7 +6,7 @@ import {getAuthMethodRepo, getSessRepo, getUserRepo} from '@canalapp/shared/dist
 import {getSelf} from '@canalapp/shared/dist/util/discord';
 import {verifyInviteKey} from '../lib/invite';
 
-const APP_URL = process.env.NODE_ENV === 'production' ? 'https://canal.nz/app' : 'http://localhost:8081';
+const APP_URL = process.env.NODE_ENV === 'production' ? 'https://app.canal.nz' : 'http://localhost:8081';
 const API_URL = process.env.NODE_ENV === 'production' ? 'https://api.canal.nz' : 'http://localhost:4080';
 const DISCORD_OAUTH_URL = 'https://discordapp.com/api/v6/oauth2';
 
