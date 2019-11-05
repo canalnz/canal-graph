@@ -5,9 +5,10 @@ WORKDIR /usr/src/app
 
 # Wild card for package.json & package-lock.json
 # Seperate command for cp package.json so that it doesn't reinstall every source change
-# Copies creds for install, then removes them
+COPY .npmrc* ./
 COPY package*.json ./
 
+# Use creds, installs, then forgets them
 RUN bash ci-install.sh
 
 # Copy source
