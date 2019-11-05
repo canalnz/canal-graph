@@ -42,7 +42,7 @@ const scriptResolvers = {
     async createScript(parent: void, args: {script?: ScriptCreateInput}, context: GraphContext): Promise<Script> {
       const scriptRepo = getScriptRepo();
       if (!args.script) {
-        const name = generateUniqueScriptNameForUser(context.user);
+        const name = await generateUniqueScriptNameForUser(context.user);
 
         return await scriptRepo.createAndSave({
           name,
