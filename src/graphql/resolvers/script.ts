@@ -14,13 +14,37 @@ interface ScriptUpdateInput {
   platform?: Platform;
 }
 
+// Match Alphanumeric with dashes, and is between 1 - 100 chars
+// as long as it doesn't start with dash
+// as long as it doesn't end with dash
+const scriptNameRegexes = [/^[a-z0-9-]{1,100}$/, /^[^-]/, /[^-]$/];
+function validateScriptName(name: string): boolean {
+  return scriptNameRegexes.every((r) => r.test(name));
+}
+
 async function generateUniqueScriptNameForUser(user: User): Promise<string> {
   let tries = 0;
   while (tries++ < 10) {
     const name = namor.generate({words: 2, numbers: 0});
-    if (!(await getScriptRepo().findOne({resourceOwnerId: user.id, name}))) return name;
+    if (await checkIfScriptNameIsUniqueForUser(name, user)) return name;
   }
   return Math.random().toString(36).substr(2); // Give up on a pretty ID, just make something boring
+}
+async function checkIfScriptNameIsUniqueForUser(name: string, user: User): Promise<boolean> {
+  return await getScriptRepo().count({resourceOwnerId: user.id, name}) === 0;
+}
+async function coerceScriptNameForUser(user: User, name?: string): Promise<string> {
+  if (name) {
+    // TODO wtf
+    // console.log(name, valid);
+    if (!validateScriptName(name)) {
+      throw new Error('Invalid script name');
+    }
+    if (!await checkIfScriptNameIsUniqueForUser(name, user)) {
+      throw new Error('A script with that name already exists!');
+    }
+    return name;
+  } else return await generateUniqueScriptNameForUser(user);
 }
 
 const scriptResolvers = {
@@ -51,8 +75,10 @@ const scriptResolvers = {
           owner: context.user
         });
       } else {
+        const name = await coerceScriptNameForUser(context.user, args.script.name);
+
         return scriptRepo.createAndSave({
-          name: args.script.name,
+          name,
           body: args.script.body,
           platform: args.script.platform || 'NODEJS',
           owner: context.user
@@ -64,7 +90,9 @@ const scriptResolvers = {
       const script = await scriptRepo.findOneIfUserCanRead(args.script.id, context.user);
       if (!script) throw new Error('Not found');
 
-      if (args.script.name) script.name = args.script.name;
+      if (args.script.name) {
+        script.name = await coerceScriptNameForUser(context.user, args.script.name);
+      }
       if (args.script.platform) script.platform = args.script.platform;
       if (args.script.body) script.body = args.script.body;
       return await scriptRepo.save(script);
