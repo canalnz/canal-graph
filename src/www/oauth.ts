@@ -5,6 +5,7 @@ import * as cookieParser from 'cookie-parser';
 import {getAuthMethodRepo, getSessRepo, getUserRepo} from '@canalapp/shared/dist/db';
 import {getSelf} from '@canalapp/shared/dist/util/discord';
 import {verifyInviteKey} from '../lib/invite';
+import {createNewUser} from '../lib/signup';
 
 const APP_URL = process.env.NODE_ENV === 'production' ? 'https://app.canal.nz' : 'http://localhost:8081';
 const API_URL = process.env.NODE_ENV === 'production' ? 'https://api.canal.nz' : 'http://localhost:4080';
@@ -82,12 +83,13 @@ router
         return res.redirect(`${APP_AUTH_CALLBACK}?error=invalid-key`);
       }
       console.log('User not found, creating new one!');
-      user = await userRepo.createAndSave({
+      // TODO
+      user = await createNewUser({
         name: discordUser.username,
         email: discordUser.email,
-        avatarHash: discordUser.avatar,
-        verified: discordUser.verified
+        avatarHash: discordUser.avatar || null
       });
+
       await authMethodRepo.createAndSave({
         user,
         provider: 'DISCORD',

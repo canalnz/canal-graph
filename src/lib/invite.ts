@@ -29,3 +29,6 @@ export async function verifyInviteKey(token: string): Promise<boolean> {
     return false;
   }
 }
+
+// Allow us to run this file directly to grab a key
+if (require.main === module) createInviteKey().then((k) => console.log(k));

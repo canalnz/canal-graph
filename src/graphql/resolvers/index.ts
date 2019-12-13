@@ -4,28 +4,35 @@ import moduleResolvers from './module';
 import moduleLinkResolvers from './moduleLink';
 import userResolvers from './user';
 import {adminResolvers} from './admin';
+import {workspaceResolvers} from './workspace';
 
-// Who needs to scale, pfffttt
-const resolvers = {
-  ...botResolvers,
-  ...moduleResolvers,
-  ...moduleLinkResolvers,
-  ...userResolvers,
-  ...adminResolvers,
-  Query: {
-    ...botResolvers.Query,
-    ...moduleResolvers.Query,
-    ...moduleLinkResolvers.Query,
-    ...userResolvers.Query,
-    ...adminResolvers.Query
-  },
-  Mutation: {
-    ...botResolvers.Mutation,
-    ...moduleResolvers.Mutation,
-    ...moduleLinkResolvers.Mutation,
-    ...userResolvers.Mutation,
-    ...adminResolvers.Mutation
-  },
+let resolvers = {
+  Query: {},
+  Mutation: {},
   Date: dateScalar
 };
+
+[
+  botResolvers,
+  moduleResolvers,
+  moduleLinkResolvers,
+  userResolvers,
+  adminResolvers,
+  workspaceResolvers
+].forEach((r) => {
+  // Merges it somewhat gracefully
+  resolvers = {
+    ...resolvers,
+    ...r,
+    Query: {
+      ...resolvers.Query,
+      ...r.Query
+    },
+    Mutation: {
+      ...resolvers.Mutation,
+      ...r.Mutation
+    }
+  };
+});
+
 export default resolvers;

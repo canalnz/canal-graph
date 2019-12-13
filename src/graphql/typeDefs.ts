@@ -216,7 +216,7 @@ const typeDefs = gql`
         # Workspace CRUD
         createWorkspace(workspace: CreateWorkspaceInput!): Workspace
         updateWorkspace(workspace: UpdateWorkspaceInput!): Workspace!
-        deleteWorkspace(id: String!): String! # This endpoint will delete if owner, otherwise just revoke access
+        removeWorkspace(id: String!): String! # This endpoint will delete if owner, otherwise just revoke access
 
         # Module CRUD
         createModule(module: ModuleCreateInput!): Module
