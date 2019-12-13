@@ -1,15 +1,13 @@
 import {GraphContext, Paginated} from '../typeDefs';
-import {buildAvatarUrl} from '@canalapp/shared/dist/util/discord';
 import {
   Bot,
-  BotPermission, BotPermissionQualifierType, BotState,
-  getBotPermRepo,
-  getBotRepo, getBotStateRepo,
-  getScriptLinkRepo, getScriptStateRepo,
+  getBotRepo,
+  getModuleLinkRepo,
   getUserRepo,
-  Platform, ScriptLink, ScriptStateName,
+  ModuleLink,
   User
 } from '@canalapp/shared/dist/db';
+import {Platform} from '@canalapp/shared/dist/constants';
 
 export interface BotCreateInput {
   platform: Platform;
@@ -18,22 +16,6 @@ export interface BotCreateInput {
 export interface BotUpdateInput {
   id: string;
   platform?: Platform;
-}
-
-export interface BotPermissionCreateInput {
-  name: string;
-  bot: string;
-}
-export interface BotPermissionUpdateInput {
-  id: string;
-  name?: string;
-  qualifiers?: BotPermissionQualifierInput[];
-}
-export interface BotPermissionQualifierInput {
-  id?: string;
-  delete?: true;
-  type: BotPermissionQualifierType;
-  value: string;
 }
 
 const botResolvers = {
@@ -72,78 +54,56 @@ const botResolvers = {
       if (!bot) throw new Error('Couldn\'t find that bot :(');
       await botRepo.remove(bot);
       return args.bot;
-    },
-
-    async createBotPermission(parent: void, args: {perm: BotPermissionCreateInput}, context: GraphContext): Promise<BotPermission> {
-      const bot = await getBotRepo().findOneIfUserCanRead(args.perm.bot, context.user);
-      if (!bot) throw new Error('404 bot not found?');
-
-      return getBotPermRepo().createAndSave({
-        bot,
-        name: args.perm.name
-      });
-    },
-    async updateBotPermission(parent: void, args: {perm: BotPermissionUpdateInput}, context: GraphContext): Promise<BotPermission> {
-      // this is a nightmare function. procrastination time!
-      // TODO implement updateBotPermission
-      throw new Error('Not implemented yet!');
-    },
-    async deleteBotPermission(parent: void, args: {perm: string}, context: GraphContext): Promise<string> {
-      const permRepo = getBotPermRepo();
-      const perm = await permRepo.findOne({id: args.perm});
-      if (!perm) throw new Error('That perm couldn\'t be found');
-      // check perms for perm
-      const bot = await getBotRepo().findOneIfUserCanRead(perm.botId, context.user);
-      if (!bot) throw new Error('That perm couldn\'t be found');
-
-      await permRepo.remove(perm);
-      return perm.id;
     }
   },
   Bot: {
+    __resolveType(bot: Bot, context: GraphContext, info: void) {
+      if (bot.platform === 'DISCORD') return 'DiscordBot';
+      if (bot.platform === 'SLACK') return 'SlackBot';
+      else return null;
+    },
     // id can default
     // name can default
-    // platform can default
+    // avatarHash can default
+    async avatarUrl(parent: Bot): Promise<string> {
+      return parent.getAvatarUrl();
+    },
+    // runtime can default
     async resourceOwner(parent: Bot): Promise<User> {
       return await getUserRepo().findOneOrFail({id: parent.resourceOwnerId});
-    },
-    avatarUrl(parent: Bot): string {
-      return buildAvatarUrl(parent.discordId, parent.avatarHash || undefined);
     },
     // created can default
     async createdBy(parent: Bot): Promise<User | null> {
       // Just being lazy and using the resource owner as creator
       return await getUserRepo().findOne({id: parent.resourceOwnerId}) || null;
     },
-    async connection(parent: Bot): Promise<BotState | null> {
-      const state = await getBotStateRepo().findOne({botId: parent.id});
-      return state || null;
-    },
-    async scripts(parent: Bot, args: void, context: GraphContext): Promise<Paginated<ScriptLink>> {
-      // We can go ahead and load these scripts, because only trusted people can load the root bot
-      const scriptLinkRepo = getScriptLinkRepo();
-      const scripts = await scriptLinkRepo.find({botId: parent.id});
+    async modules(parent: Bot, args: void, context: GraphContext): Promise<Paginated<ModuleLink>> {
+      // We can go ahead and load these modules, because only trusted people can load the root bot
+      const moduleLinkRepo = getModuleLinkRepo();
+      const modules = await moduleLinkRepo.find({botId: parent.id});
       return {
-        nodes: scripts,
-        totalCount: scripts.length
+        nodes: modules,
+        totalCount: modules.length
       };
     },
-    async script(parent: Bot, args: {id: string}, context: GraphContext): Promise<ScriptLink | null> {
-      return await getScriptLinkRepo().findOne({botId: parent.id, scriptId: args.id}) || null;
-    },
-    async permissions(parent: Bot, args: void, context: GraphContext): Promise<BotPermission[]> {
-      return await getBotPermRepo().find({botId: parent.id});
+    async module(parent: Bot, args: {id: string}, context: GraphContext): Promise<ModuleLink | null> {
+      return await getModuleLinkRepo().findOne({botId: parent.id, moduleId: args.id}) || null;
     }
-    // options can default?
   },
-  BotConnection: {
-    // state can default
-    created(parent: BotState): Date {
-      return parent.updated;
+  DiscordBot: {
+    async discordUsername(parent: Bot): Promise<string> {
+      return (await parent.discordDetails).username;
+    },
+    async discordDiscriminator(parent: Bot): Promise<string> {
+      return (await parent.discordDetails).discriminator;
+    },
+    async discordId(parent: Bot): Promise<string> {
+      return (await parent.discordDetails).discordId;
+    },
+    async token(parent: Bot): Promise<string> {
+      return (await parent.discordDetails).token;
     }
   }
-  // BotPermission can all default
-  // BotPermissionQualifier can default too
 };
 
 export default botResolvers;

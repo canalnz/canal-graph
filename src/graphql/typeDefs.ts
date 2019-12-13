@@ -11,29 +11,26 @@ export interface GraphContext {
 }
 
 const typeDefs = gql`
-    enum Platform {
+    enum Runtime {
         """
-        A loose description of where a Script will be executed
+        Available runtimes to run a script
         """
-        NODEJS
+        JAVASCRIPT
+        #  JAVASCRIPT_V2 in future, or perhaps rebind it?
     }
-    enum BotState {
+    # enum Platform {
+    #     """
+    #     Which Chat platform to target. Currently hidden away from user
+    #     """
+    #     DISCORD
+    #     SLACK
+    # }
+    enum ModuleState {
         """
-        The State of a bot at the end of a Connection
+        Different states a module can be in
         """
-        OFFLINE
-        FAILED
-        STARTUP
-        ONLINE
-        ERROR
-    }
-    enum ScriptState {
-        """
-        What a Script is up to
-        """
-        STOPPED
+        NONE
         RUNNING
-        PASSIVE
         ERROR
     }
     scalar Date # ISO String
@@ -43,9 +40,9 @@ const typeDefs = gql`
         A account on Canal
         """
         id: String!
-        name: String
-        avatarUrl: String
-        discordId: String
+        name: String!
+        avatarUrl: String!
+        avatarHash: String
         admin: Boolean
     }
     type ClientUser {
@@ -55,175 +52,195 @@ const typeDefs = gql`
         id: String!
         name: String!
         avatarUrl: String!
-        email: String!
+        avatarHash: String
+        email: String
         created: Date!
-        discordId: String
-        admin: Boolean!
+        admin: Boolean
     }
-    input UserUpdateInput {
-        id: String
+    input ProfileUpdateInput {
         name: String
         email: String
     }
 
-    type Bot {
+    interface Bot {
         id: String!
         name: String!
-        discriminator: String
-        discordId: String
-        token: String!
-        avatarUrl: String
-        platform: Platform!
-        apiKey: String!
+        avatarHash: String
+        avatarUrl: String!
+        runtime: Runtime!
         resourceOwner: User!
         created: Date!
         createdBy: User
-        connection: BotConnection
-        scripts(first: Int = 10, after: String): ScriptLinks!
-        script(id: String!): ScriptLink
-        permissions: [BotPermission!]! # At the moment this doesn't seem worth paginating
-        options: BotOptions!
+        modules: ModuleLinks!
+        module(id: String!): ModuleLink
     }
+    type DiscordBot implements Bot {
+        id: String!
+        name: String!
+        avatarHash: String
+        avatarUrl: String!
+        runtime: Runtime!
+        resourceOwner: User!
+        created: Date!
+        createdBy: User
+        modules: ModuleLinks!
+        module(id: String!): ModuleLink
+
+
+        discordUsername: String!
+        discordDiscriminator: String!
+        discordId: String!
+        token: String!
+    }
+
+    #type SlackBot implements Bot {
+    #    id: String!
+    #    name: String!
+    #    avatarHash: String
+    #    avatarUrl: String!
+    #    runtime: Runtime!
+    #    resourceOwner: User!
+    #    created: Date!
+    #    createdBy: User
+    #    modules: ModuleLinks!
+    #    module(id: String!): ModuleLink
+    #
+    #
+    #    displayName: String!
+    #    slackId: String!
+    #    token: String!
+    #}
+
     type Bots {
         totalCount: Int!
         nodes: [Bot!]!
     }
-    type BotConnection {
-        state: BotState
-        created: Date
-    }
-    type BotOptions {
-        token: String
-        commandMode: String
-    }
-    input BotOptionsInput {
-        token: String
-        commandMode: String
-    }
     input BotCreateInput {
-        platform: String!
+        runtime: Runtime
         token: String
     }
     input BotUpdateInput {
         id: String!
-        platform: String
+        runtime: Runtime
     }
 
-    # Jesus christ this is a lot of types for a tiny feature
-    enum BotPermissionQualifierType {
-        USER
-        ROLE
-        CHANNEL
-        GUILD
+    type BotAccess {
+        user: User!
+        bot: Bot!
+        permissions: Int!
+        created: Date!
+        createdBy: User
     }
-    type BotPermissionQualifier {
-        id: String!
-        type: String!
-        value: String!
-    }
-    type BotPermission {
+
+    type Workspace {
         id: String!
         name: String!
-        qualifiers: [BotPermissionQualifier!]!
+        resourceOwner: User!
+        isPersonal: Boolean
+        users: [WorkspaceAccess]
+        modules: [Module]!
     }
-    input BotPermissionCreateInput {
-        bot: String!
+
+    type WorkspaceAccess {
+        user: User!
+        workspace: Workspace!
+        permissions: Int! # Bitfield representing permissions (Discord style!)
+        created: Date!
+        createdBy: User
+    }
+
+    input CreateWorkspaceInput {
         name: String!
     }
-    input BotPermissionQualifierInput {
-        id: String # If this is missing, a new qualifier will be created. If present, it will be updated
-        delete: Boolean # If this and ID is present, the Qualifier will be removed
-        type: String
-        value: String
-    }
-    input BotPermissionUpdateInput {
+    input UpdateWorkspaceInput {
         id: String!
         name: String
-        qualifiers: [BotPermissionQualifierInput]!
     }
 
-    type Script {
+    type Module {
         id: String!
         name: String!
         body: String!
-        platform: Platform!
-        resourceOwner: User!
+        deployedBody: String!
+        runtime: Runtime!
+        workspace: Workspace
         created: Date!
         createdBy: User
         updated: Date
         updatedBy: User
     }
-    type Scripts {
+    type Modules {
         totalCount: Int!
-        nodes: [Script!]!
+        nodes: [Module!]!
     }
-    input ScriptCreateInput {
-        name: String!
-        body: String!
-        platform: Platform
+    input ModuleCreateInput {
+        name: String
+        body: String
+        runtime: Runtime!
+        workspace: String!
     }
-    input ScriptUpdateInput {
+    input ModuleUpdateInput {
         id: String!
         name: String
         body: String
-        platform: Platform
+        deployed_body: String
+        runtime: Runtime
     }
 
-    type ScriptLink {
-        script: Script!
+    type ModuleLink {
+        module: Module!
         bot: Bot!
-        lastStarted: Date
-        state: ScriptState
+        state: ModuleState
         created: Date!
         createdBy: User
     }
-    type ScriptLinks {
+    type ModuleLinks {
         totalCount: Int!
-        nodes: [ScriptLink!]!
+        nodes: [ModuleLink!]!
     }
 
     type Query {
         bots(first: Int = 10, after: String): Bots!
         bot(id: String!): Bot
 
-        scripts(first: Int = 10, after: String): Scripts!
-        script(id: String!): Script
+        workspaces: [Workspace]!
+        workspace(id: String!): Workspace
+
+        module(id: String!): Module
 
         user: ClientUser!
         users: [User!]
     }
 
     type Mutation {
-        # Script CRUD
-        createScript(script: ScriptCreateInput): Script
-        updateScript(script: ScriptUpdateInput!): Script
-        deleteScript(script: String!): String!
+        # Workspace CRUD
+        createWorkspace(workspace: CreateWorkspaceInput!): Workspace
+        updateWorkspace(workspace: UpdateWorkspaceInput!): Workspace!
+        deleteWorkspace(id: String!): String! # This endpoint will delete if owner, otherwise just revoke access
 
-        # ScriptLink CRUD
-        addScriptToBot(script: String!, bot: String!): ScriptLink!
-        removeScriptFromBot(script: String!, bot: String!): String!
-        restartScriptOnBot(script: String!, bot: String!): ScriptLink!
-        restartScriptEverywhere(script: String!): [ScriptLink]!
+        # Module CRUD
+        createModule(module: ModuleCreateInput!): Module
+        updateModule(module: ModuleUpdateInput!): Module!
+        deleteModule(id: String!): String!
+
+        # ModuleLink CRUD
+        linkModuleToBot(module: String!, bot: String!): ModuleLink
+        removeModuleFromBot(module: String!, bot: String!): String!
 
         # Bot CRUD
         createBot(bot: BotCreateInput!): Bot
-        updateBot(bot: BotUpdateInput!): Bot
+        updateBot(bot: BotUpdateInput!): Bot!
         deleteBot(bot: String!): String!
 
-        # Bot Permission CRUD
-        createBotPermission(perm: BotPermissionCreateInput!): BotPermission!
-        updateBotPermission(perm: BotPermissionUpdateInput!): BotPermission!
-        deleteBotPermission(perm: String!): String!
-
         # User CRUD
-        updateUser(user: UserUpdateInput): User!
+        updateProfile(user: ProfileUpdateInput): ClientUser!
         destroySession: String!
         destroyAllSessions(user: String): String!
         deleteUser(user: String): String!
+
+        # Platform administation stuff
         setUserFlag(user: String!, name: String!, value: Boolean): Boolean
-
-
-        createInviteKey(lifespan: Int): String
+        createInviteKey(lifespan: Int): String!
     }
 `;
 

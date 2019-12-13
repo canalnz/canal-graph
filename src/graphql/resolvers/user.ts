@@ -1,18 +1,12 @@
 import {GraphContext} from '../typeDefs';
-import {ForbiddenError} from 'apollo-server-express';
 import {buildAvatarUrl} from '@canalapp/shared/dist/util/discord';
 import {getAuthMethodRepo, getSessRepo, getUserFlagRepo, getUserRepo, User} from '@canalapp/shared/dist/db';
-import {createInviteKey} from '../../lib/invite';
+import { ForbiddenError } from 'apollo-server';
 
 const resolvers = {
   Query: {
     user(parent: void, args: void, context: GraphContext): User {
       return context.user;
-    },
-    async users(parent: void, args: void, context: GraphContext): Promise<User[] | null> {
-      if (getUserFlagRepo().isUserAdmin(context.user)) {
-        return getUserRepo().find();
-      } else return null;
     }
   },
   Mutation: {
@@ -24,12 +18,16 @@ const resolvers = {
 
       return context.user.id;
     },
-    async destroyAllSessions(parent: void, args: void, context: GraphContext): Promise<string> {
+    async destroyAllSessions(parent: void, args: {user?: string}, context: GraphContext): Promise<string> {
+      if (!await getUserFlagRepo().isUserAdmin(context.user) && args.user !== context.user.id) {
+        throw new ForbiddenError('You aren\'t permitted to destroy other user\'s sessions!');
+      }
+
       const sessRepo = getSessRepo();
-      const sesses = await sessRepo.find({userId: context.user.id});
+      const sesses = await sessRepo.find({userId: args.user || context.user.id});
       await sessRepo.remove(sesses);
 
-      return context.user.id;
+      return args.user || context.user.id;
     },
     async deleteUser(parent: void, args: {user?: string}, context: GraphContext): Promise<string> {
       const user = args.user || context.user.id;
@@ -39,41 +37,29 @@ const resolvers = {
       await getUserRepo().delete({id: user});
       return user;
     },
-    async setUserFlag(parent: void, args: {user: string, name: string, value?: boolean}, context: GraphContext): Promise<boolean> {
-      const flagRepo = getUserFlagRepo();
-      if (!await flagRepo.isUserAdmin(context.user)) throw new Error('You aren\'t permitted to use this mutation');
-      if (args.value) {
-        const existing = await getUserFlagRepo().findOne({userId: args.user, name: args.name});
-        if (existing) {
-          existing.value = 'true';
-          await flagRepo.save(existing);
-        } else {
-          await flagRepo.createAndSave({...args, value: 'true'});
-        }
-      } else {
-        await getUserFlagRepo().delete({userId: args.user, name: args.name});
-      }
-      return args.value;
-    },
-    async createInviteKey(parent: void, args: {lifespan?: number}, context: GraphContext): Promise<string> {
-      if (!await getUserFlagRepo().isUserAdmin(context.user)) throw new ForbiddenError('Forbidden');
-      return await createInviteKey(Date.now() + args.lifespan);
-    }
   },
   User: {
+    // id can default
+    // name can default
     async admin(parent: User, args: void, context: GraphContext): Promise<boolean> {
+      if (!await getUserFlagRepo().isUserAdmin(context.user.id)) {
+        throw new Error('You aren\'t permitted to access this value');
+      }
       return await getUserFlagRepo().isUserAdmin(parent.id);
     },
     async avatarUrl(parent: User): Promise<string> {
-      const discordAuth = await getAuthMethodRepo().findOneOrFail({userId: parent.id, provider: 'DISCORD'});
-      return buildAvatarUrl(discordAuth.providerId, parent.avatarHash);
+      return parent.getAvatarUrl();
     },
   },
   ClientUser: {
+    // id can default
+    // name can default
     async avatarUrl(parent: User): Promise<string> {
-      const discordAuth = await getAuthMethodRepo().findOneOrFail({userId: parent.id, provider: 'DISCORD'});
-      return buildAvatarUrl(discordAuth.providerId, parent.avatarHash);
+      return parent.getAvatarUrl();
     },
+    // avatarHash can default
+    // email can default
+    // created can default
     async admin(parent: User, args: void, context: GraphContext): Promise<boolean> {
       return await getUserFlagRepo().isUserAdmin(context.user);
     }

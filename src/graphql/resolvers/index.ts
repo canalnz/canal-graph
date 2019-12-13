@@ -1,26 +1,30 @@
 import {dateScalar} from './date';
 import botResolvers from './bot';
-import scriptResolvers from './script';
-import scriptLinkResolvers from './scriptLink';
+import moduleResolvers from './module';
+import moduleLinkResolvers from './moduleLink';
 import userResolvers from './user';
+import {adminResolvers} from './admin';
 
-// Who needs scale, pfffttt
+// Who needs to scale, pfffttt
 const resolvers = {
   ...botResolvers,
-  ...scriptResolvers,
-  ...scriptLinkResolvers,
+  ...moduleResolvers,
+  ...moduleLinkResolvers,
   ...userResolvers,
+  ...adminResolvers,
   Query: {
     ...botResolvers.Query,
-    ...scriptResolvers.Query,
-    ...scriptLinkResolvers.Query,
-    ...userResolvers.Query
+    ...moduleResolvers.Query,
+    ...moduleLinkResolvers.Query,
+    ...userResolvers.Query,
+    ...adminResolvers.Query
   },
   Mutation: {
     ...botResolvers.Mutation,
-    ...scriptResolvers.Mutation,
-    ...scriptLinkResolvers.Mutation,
-    ...userResolvers.Mutation
+    ...moduleResolvers.Mutation,
+    ...moduleLinkResolvers.Mutation,
+    ...userResolvers.Mutation,
+    ...adminResolvers.Mutation
   },
   Date: dateScalar
 };
