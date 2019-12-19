@@ -1,7 +1,15 @@
 import * as namor from 'namor';
 import {GraphContext, Paginated} from '../typeDefs';
-import {getModuleRepo, getUserRepo, getWorkspaceRepo, Module, User, Workspace} from '@canalapp/shared/dist/db';
-import {Platform, Runtime} from '@canalapp/shared/dist/constants';
+import {
+  getModuleLinkRepo,
+  getModuleRepo,
+  getUserRepo,
+  getWorkspaceRepo,
+  Module, ModuleLink,
+  User,
+  Workspace
+} from '@canalapp/shared/dist/db';
+import {Runtime} from '@canalapp/shared/dist/constants';
 
 interface ModuleCreateInput {
   name?: string;
@@ -126,6 +134,16 @@ const moduleResolvers = {
     async updatedBy(parent: Module): Promise<User | null> {
       if (!parent.updatedById) return null;
       return await getUserRepo().findOne({id: parent.updatedById}) || null;
+    },
+    async link(parent: Module, args: {bot: string}, context: GraphContext): Promise<ModuleLink | null> {
+      return await getModuleLinkRepo().findOne({moduleId: parent.id, botId: args.bot}) || null;
+    },
+    async links(parent: Module, args: void, context: GraphContext): Promise<Paginated<ModuleLink>> {
+      const links = await getModuleLinkRepo().find({moduleId: parent.id});
+      return {
+        totalCount: links.length,
+        nodes: links
+      };
     }
   }
 };

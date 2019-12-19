@@ -122,6 +122,7 @@ const typeDefs = gql`
     input BotUpdateInput {
         id: String!
         runtime: Runtime
+        token: String
     }
 
     type BotAccess {
@@ -138,7 +139,12 @@ const typeDefs = gql`
         resourceOwner: User!
         isPersonal: Boolean
         users: [WorkspaceAccess]
-        modules: [Module]!
+        modules: Modules!
+    }
+
+    type Workspaces {
+        totalCount: Int!
+        nodes: [Workspace]!
     }
 
     type WorkspaceAccess {
@@ -168,10 +174,12 @@ const typeDefs = gql`
         createdBy: User
         updated: Date
         updatedBy: User
+        link(bot: String!): ModuleLink
+        links: [ModuleLinks]!
     }
     type Modules {
         totalCount: Int!
-        nodes: [Module!]!
+        nodes: [Module]!
     }
     input ModuleCreateInput {
         name: String
@@ -203,7 +211,7 @@ const typeDefs = gql`
         bots(first: Int = 10, after: String): Bots!
         bot(id: String!): Bot
 
-        workspaces: [Workspace]!
+        workspaces: Workspaces
         workspace(id: String!): Workspace
 
         module(id: String!): Module

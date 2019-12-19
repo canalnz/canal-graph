@@ -1,6 +1,5 @@
 import {GraphContext} from '../typeDefs';
-import {buildAvatarUrl} from '@canalapp/shared/dist/util/discord';
-import {getAuthMethodRepo, getSessRepo, getUserFlagRepo, getUserRepo, User} from '@canalapp/shared/dist/db';
+import {getSessRepo, getUserFlagRepo, getUserRepo, User} from '@canalapp/shared/dist/db';
 import { ForbiddenError } from 'apollo-server';
 
 const resolvers = {

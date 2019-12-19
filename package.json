@@ -28,10 +28,10 @@
     "jest": "^24.9.0",
     "ts-jest": "^24.1.0",
     "tslint": "^5.12.1",
-    "typescript": "^3.6.3"
+    "typescript": "^3.7.3"
   },
   "dependencies": {
-    "@canalapp/shared": "npm:@asherfoster/canal-shared@^2.0.0",
+    "@canalapp/shared": "npm:@asherfoster/canal-shared@^2.0.1",
     "@google-cloud/pubsub": "^1.1.0",
     "apollo-server": "^2.9.4",
     "apollo-server-express": "^2.9.4",

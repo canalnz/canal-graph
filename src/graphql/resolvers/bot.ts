@@ -3,6 +3,7 @@ import {
   Bot,
   getBotRepo,
   getModuleLinkRepo,
+  getDiscordDetailsRepo,
   getUserRepo,
   ModuleLink,
   User
@@ -16,6 +17,7 @@ export interface BotCreateInput {
 export interface BotUpdateInput {
   id: string;
   platform?: Platform;
+  token?: string;
 }
 
 const botResolvers = {
@@ -35,18 +37,32 @@ const botResolvers = {
     async createBot(parent: void, {bot}: {bot: BotCreateInput}, context: GraphContext): Promise<Bot> {
       return getBotRepo().createAndSave({
         ...bot,
+        platform: 'DISCORD',
         owner: context.user
       });
     },
-    // Currently this is only used for changing the platform
     async updateBot(parent: void, {bot: updateData}: {bot: BotUpdateInput}, context: GraphContext): Promise<Bot> {
       const botRepo = getBotRepo();
       const bot = await botRepo.findOneIfUserCanRead(updateData.id, context.user);
       if (!bot) throw new Error('Couldn\'t find that bot :(');
-      if (!updateData.platform) return bot; // idk why this would happen but 🤷‍
 
-      bot.platform = updateData.platform;
-      return await botRepo.save(bot);
+      if (updateData.token) {
+        // TODO test updated token
+        try {
+          await getBotRepo().updateBotToken(bot, updateData.token);
+        } catch (e) {
+          console.error(e);
+          throw new Error('Couldn\'t update the bot. Are you sure the token is correct?');
+        }
+      }
+
+      if (updateData.platform) {
+        bot.platform = updateData.platform;
+        await botRepo.save(bot);
+      }
+
+
+      return bot;
     },
     async deleteBot(parent: void, args: {bot: string}, context: GraphContext): Promise<string> {
       const botRepo = getBotRepo();
@@ -61,22 +77,33 @@ const botResolvers = {
       if (bot.platform === 'DISCORD') return 'DiscordBot';
       if (bot.platform === 'SLACK') return 'SlackBot';
       else return null;
+    }
+  },
+  DiscordBot: {
+    async discordUsername(parent: Bot): Promise<string> {
+      return parent.discordDetails.username;
     },
+    async discordDiscriminator(parent: Bot): Promise<string> {
+      return parent.discordDetails.discriminator;
+    },
+    async discordId(parent: Bot): Promise<string> {
+      return parent.discordDetails.discordId;
+    },
+    async token(parent: Bot): Promise<string> {
+      return parent.discordDetails.token;
+    },
+
+    // ** Apollo won't use resolvers from the interface type, so we have to specify them here
     // id can default
     // name can default
     // avatarHash can default
-    async avatarUrl(parent: Bot): Promise<string> {
+    avatarUrl(parent: Bot): Promise<string> {
       return parent.getAvatarUrl();
     },
     // runtime can default
-    async resourceOwner(parent: Bot): Promise<User> {
-      return await getUserRepo().findOneOrFail({id: parent.resourceOwnerId});
-    },
+    // resourceOwner can default
     // created can default
-    async createdBy(parent: Bot): Promise<User | null> {
-      // Just being lazy and using the resource owner as creator
-      return await getUserRepo().findOne({id: parent.resourceOwnerId}) || null;
-    },
+    // createdBy can default
     async modules(parent: Bot, args: void, context: GraphContext): Promise<Paginated<ModuleLink>> {
       // We can go ahead and load these modules, because only trusted people can load the root bot
       const moduleLinkRepo = getModuleLinkRepo();
@@ -88,20 +115,6 @@ const botResolvers = {
     },
     async module(parent: Bot, args: {id: string}, context: GraphContext): Promise<ModuleLink | null> {
       return await getModuleLinkRepo().findOne({botId: parent.id, moduleId: args.id}) || null;
-    }
-  },
-  DiscordBot: {
-    async discordUsername(parent: Bot): Promise<string> {
-      return (await parent.discordDetails).username;
-    },
-    async discordDiscriminator(parent: Bot): Promise<string> {
-      return (await parent.discordDetails).discriminator;
-    },
-    async discordId(parent: Bot): Promise<string> {
-      return (await parent.discordDetails).discordId;
-    },
-    async token(parent: Bot): Promise<string> {
-      return (await parent.discordDetails).token;
     }
   }
 };
